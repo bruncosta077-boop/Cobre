@@ -1,9 +1,46 @@
 {
-  "name": "player-musica",
+  "name": "cobre-desktop",
   "version": "3.2.0",
-  "description": "Cobre, player de música local",
+  "description": "Cobre, reprodutor de música local",
   "main": "main.js",
   "author": "Bruno C S Moraes",
   "license": "UNLICENSED",
-  "dependencies": { "music-metadata": "^7.14.0" }
+  "scripts": {
+    "postinstall": "install-electron",
+    "start": "electron .",
+    "dist": "electron-builder --win --x64"
+  },
+  "dependencies": {
+    "music-metadata": "^7.14.0"
+  },
+  "devDependencies": {
+    "electron": "45.3.4",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "com.cobre.desktop",
+    "productName": "Cobre",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "**/*",
+      "!release/**",
+      "!coverage/**"
+    ],
+    "artifactName": "${productName}-${version}-${arch}.${ext}",
+    "win": {
+      "icon": "icon.ico",
+      "target": [
+        "nsis",
+        "zip"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "perMachine": false
+    }
+  }
 }
