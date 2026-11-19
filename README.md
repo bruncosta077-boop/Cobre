@@ -49,6 +49,10 @@ Na edição portátil descompactada, acesse **Configurações → Manutenção �
 
 O streaming integrado entre Desktop, Mobile e TV e a sincronização da biblioteca ainda não estão disponíveis. A presença de dispositivos e a conta Cobre ID, por si só, não dão acesso à música do computador em outros aparelhos.
 
+## Segurança do acesso remoto
+
+O acesso remoto do Desktop transmite a biblioteca diretamente pela rede local em HTTP. O endereço completo contém uma chave de acesso; trate-o como uma senha e compartilhe somente com aparelhos confiáveis na mesma rede. O conteúdo e a chave não são criptografados no Wi-Fi. Não encaminhe a porta do Cobre à internet nem use redes públicas. Para acesso fora de casa, use uma VPN privada confiável.
+
 ## Licença
 
 O projeto não declara uma licença de redistribuição. Consulte o autor antes de reutilizar ou redistribuir o código.
