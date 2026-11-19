@@ -1,43 +1,50 @@
-# Cobre Desktop
+<div align="center">
+  <img src="docs/images/cobre-desktop-biblioteca.jpg" alt="Captura do Cobre Desktop em sua biblioteca de música" width="100%">
+  <h1>Cobre Desktop</h1>
+  <p>Reprodutor de música local para Windows</p>
+  <p><strong>Versão 3.5.0 · Windows x64</strong></p>
+</div>
 
-Player de música local para Windows. Este repositório contém **somente a versão Desktop** do Cobre.
+## Downloads
 
-## Versão
+Os pacotes da versão 3.5.0 estão na [página de lançamento](https://github.com/bruncosta077-boop/Cobre/releases/tag/cobre-desktop-v3.5.0):
 
-- Código-fonte: **3.5.0**.
-- Última versão publicada: **3.5.0** (instalador, ZIP portátil e pacote de atualização interna).
-- Windows x64; o app não possui assinatura digital.
+- **Instalador:** `Cobre-3.5.0-x64.exe`
+- **Versão portátil:** `Cobre-3.5.0-x64.zip`
+- **Atualização dentro do app:** `Cobre-Update-v3.5.0-x64.zip` — para instalações portáteis compatíveis.
 
-## Código-fonte e execução
+## Sobre o projeto
 
-O código Electron está na raiz deste repositório. Requer Node.js e npm:
+Este repositório contém somente o código-fonte do Cobre Desktop. O aplicativo usa Electron e toca a biblioteca de música local no Windows.
+
+## Executar o código-fonte
+
+Requer Node.js e npm:
 
 ```powershell
 npm install
 npm start
 ```
 
-Para gerar instalador e ZIP portátil:
+Para gerar o instalador e a versão portátil:
 
 ```powershell
 npm run dist
 ```
 
-O build sai em `release/`. Para informações de integração entre os dispositivos, consulte [`docs/Cobre-Connect-v1.md`](docs/Cobre-Connect-v1.md).
+Os pacotes são gerados na pasta `release/`.
 
 ## Atualização dentro do app
 
-Na edição portátil descompactada, a opção **Configurações → Manutenção → Atualizar Cobre** consulta releases do GitHub. Para cada versão distribuída pelo atualizador, anexe `Cobre-Update-vX.Y.Z-x64.zip`, criado por `scripts/package-update.ps1`. As notas da release são mostradas depois da atualização. O atualizador verifica o SHA-256 publicado pela API do GitHub antes de instalar. Ele não atualiza uma instalação empacotada em `app.asar`.
+Na edição portátil descompactada, acesse **Configurações → Manutenção → Atualizar Cobre**. O app consulta as releases do GitHub, mostra as notas, baixa o pacote e verifica seu SHA-256 antes de aplicar a atualização. Esse mecanismo não atualiza instalações empacotadas em `app.asar`.
 
-## Separação dos produtos
+## Ecossistema Cobre
 
-- [Cobre Mobile](https://github.com/bruncosta077-boop/Cobre-Mobile) — cliente Android independente.
-- [Cobre Server](https://github.com/bruncosta077-boop/Cobre-Server) — serviço de identidade e coordenação do ecossistema.
+- [Cobre Mobile](https://github.com/bruncosta077-boop/Cobre-Mobile) — cliente Android independente, em protótipo.
+- [Cobre Server](https://github.com/bruncosta077-boop/Cobre-Server) — serviço Cobre ID para contas, sessões, dispositivos e pareamento inicial.
 
-Os produtos ainda estão em estágios diferentes e **ainda não entregam streaming integrado entre Desktop, Mobile e TV**. A conta Cobre ID e a presença de dispositivos não significam que a biblioteca do PC já esteja disponível nos outros aparelhos.
+O streaming integrado entre Desktop, Mobile e TV e a sincronização da biblioteca ainda não estão disponíveis. A presença de dispositivos e a conta Cobre ID, por si só, não dão acesso à música do computador em outros aparelhos.
 
-## Estado do projeto
+## Licença
 
-Este é o código-fonte do Desktop. A versão 3.5.0 está publicada com instalador, ZIP portátil e pacote de atualização interna. O atualizador interno atende à edição portátil e não atualiza instalações empacotadas em app.asar.
-
-O projeto não declara uma licença de redistribuição. Consulte o autor antes de reutilizar ou redistribuir.
+O projeto não declara uma licença de redistribuição. Consulte o autor antes de reutilizar ou redistribuir o código.
