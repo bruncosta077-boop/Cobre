@@ -1,4 +1,6 @@
 <div align="center">
+  <img src="docs/images/cobre-logo-dark.svg" alt="Logo do Cobre" width="240">
+  <br>
   <img src="docs/images/cobre-desktop-biblioteca.jpg" alt="Captura do Cobre Desktop em sua biblioteca de música" width="100%">
   <h1>Cobre Desktop</h1>
   <p>Reprodutor de música local para Windows</p>
