@@ -8,6 +8,20 @@ const mm = require('music-metadata');
 const EXT = new Set(['.mp3', '.flac', '.wav', '.ogg', '.m4a', '.aac', '.opus']);
 let win;
 
+function restrictWindowNavigation(window, page) {
+  const expected = path.resolve(__dirname, page);
+  const blockUnexpectedNavigation = (event, url) => {
+    try {
+      if (path.resolve(fileURLToPath(url)) !== expected) event.preventDefault();
+    } catch {
+      event.preventDefault();
+    }
+  };
+  window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  window.webContents.on('will-navigate', blockUnexpectedNavigation);
+  window.webContents.on('will-redirect', blockUnexpectedNavigation);
+}
+
 function walk(dir, out = []) {
   let entries = [];
   try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return out; }
@@ -356,8 +370,16 @@ app.whenReady().then(() => {
   win = new BrowserWindow({
     width: 1040, height: 700, minWidth: 760, minHeight: 520,
     backgroundColor: '#121110', autoHideMenuBar: true, title: 'Cobre', icon: path.join(__dirname, 'icon.ico'),
-    webPreferences: { preload: path.join(__dirname, 'preload.js'), webSecurity: false, backgroundThrottling: false }
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: true,
+      webSecurity: false,
+      backgroundThrottling: false
+    }
   });
+  restrictWindowNavigation(win, 'index.html');
   win.removeMenu();
   try {
     tray = new Tray(nativeImage.createFromPath(path.join(__dirname, 'icon.png')).resize({ width: 16, height: 16 }));

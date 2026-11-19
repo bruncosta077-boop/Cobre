@@ -1,5 +1,6 @@
 // Cobre 3.0 (processo principal): capas melhores, descobrir, Last.fm, IA, mini player, acesso remoto
 const http = require('http'), os = require('os');
+const { fileURLToPath } = require('url');
 module.exports = function (X) {
   const { app, ipcMain, BrowserWindow, dialog, clipboard, nativeImage, screen, path, fs, crypto, mm, pathToFileURL, getWin, H } = X;
   const { curCover, ckey, customOf, clearCustom, CDIR, UA, queued, wait, LIB } = H;
@@ -211,7 +212,15 @@ module.exports = function (X) {
   ipcMain.handle('miniToggle', () => {
     if (mini && !mini.isDestroyed()) { mini.close(); return false; }
     const wa = screen.getPrimaryDisplay().workArea, W = 244, Hh = 320;
-    mini = new BrowserWindow({ width: W, height: Hh, minWidth: 220, minHeight: 270, maxWidth: 460, maxHeight: 620, x: wa.x + wa.width - W - 20, y: wa.y + wa.height - Hh - 20, frame: false, resizable: true, alwaysOnTop: true, skipTaskbar: true, backgroundColor: '#181614', title: 'Cobre', icon: path.join(__dirname, 'icon.ico'), webPreferences: { preload: path.join(__dirname, 'mini-preload.js'), webSecurity: false, backgroundThrottling: false } });
+    mini = new BrowserWindow({ width: W, height: Hh, minWidth: 220, minHeight: 270, maxWidth: 460, maxHeight: 620, x: wa.x + wa.width - W - 20, y: wa.y + wa.height - Hh - 20, frame: false, resizable: true, alwaysOnTop: true, skipTaskbar: true, backgroundColor: '#181614', title: 'Cobre', icon: path.join(__dirname, 'icon.ico'), webPreferences: { preload: path.join(__dirname, 'mini-preload.js'), nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: false, backgroundThrottling: false } });
+    const miniPage = path.resolve(__dirname, 'mini.html');
+    const blockMiniNavigation = (event, url) => {
+      try { if (path.resolve(fileURLToPath(url)) !== miniPage) event.preventDefault(); }
+      catch { event.preventDefault(); }
+    };
+    mini.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+    mini.webContents.on('will-navigate', blockMiniNavigation);
+    mini.webContents.on('will-redirect', blockMiniNavigation);
     mini.removeMenu(); mini.loadFile('mini.html');
     const w = getWin();
     if (w) { w.on('show', closeMini); w.on('restore', closeMini); }
