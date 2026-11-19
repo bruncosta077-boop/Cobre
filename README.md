@@ -5,7 +5,7 @@ Player de música local para Windows. Este repositório contém **somente a vers
 ## Versão
 
 - Código-fonte: **3.5.0**.
-- Último pacote publicado: **3.2.1**. A versão 3.5.0 ainda precisa de validação e de uma release pública.
+- Última versão publicada: **3.5.0** (instalador, ZIP portátil e pacote de atualização interna).
 - Windows x64; o app não possui assinatura digital.
 
 ## Código-fonte e execução
@@ -38,6 +38,6 @@ Os produtos ainda estão em estágios diferentes e **ainda não entregam streami
 
 ## Estado do projeto
 
-Este é o código-fonte do Desktop. A última release pública está na versão 3.2.1; a fonte local já avançou para 3.5.0. Não publique a versão 3.5.0 como está sem testar reprodução, instalação portátil, atualização e recuperação após falha.
+Este é o código-fonte do Desktop. A versão 3.5.0 está publicada com instalador, ZIP portátil e pacote de atualização interna. O atualizador interno atende à edição portátil e não atualiza instalações empacotadas em app.asar.
 
 O projeto não declara uma licença de redistribuição. Consulte o autor antes de reutilizar ou redistribuir.
