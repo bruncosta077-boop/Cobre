@@ -755,7 +755,7 @@ function aboutDlg() {
     title: 'Sobre o Cobre',
     html: logo +
       `<p style="text-align:center;color:var(--tx)"><b style="font-size:18px">Cobre</b><br>Versão ${VERSION}</p>` +
-      '<p style="color:var(--tx)">Criado por <b>Bruno C S Moraes</b>, com apoio do Claude (Anthropic).</p>' +
+      '<p style="color:var(--tx)">Criado por <b>Bruno C S Moraes</b>, com contribuições de <b>@dilucas00</b> e apoio do Claude (Anthropic).</p>' +
       '<p style="color:var(--tx)">© 2026 Bruno C S Moraes. Todos os direitos reservados.</p>' +
       '<p class="mu">Componentes de terceiros: Electron (licença MIT), Chromium (BSD-3-Clause e outras), Node.js (MIT) e music-metadata (MIT). Os textos completos do Electron e do Chromium estão nos arquivos LICENSE e LICENSES.chromium.html, na pasta do programa.</p>' +
       '<p class="mu">Dados e imagens vêm de MusicBrainz e Cover Art Archive (capas), LRCLIB (letras) e Deezer (fotos de artistas e capas), cada um sob os seus próprios termos.</p>',

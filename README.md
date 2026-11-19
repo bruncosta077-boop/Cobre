@@ -4,12 +4,14 @@
   <img src="docs/images/cobre-desktop-biblioteca.jpg" alt="Captura do Cobre Desktop em sua biblioteca de música" width="100%">
   <h1>Cobre Desktop</h1>
   <p>Reprodutor de música local para Windows</p>
-  <p><strong>Versão 3.5.0 · Windows x64</strong></p>
+  <p><strong>Versão 3.6.0 em validação · Última versão pública: 3.5.0</strong></p>
 </div>
+
+Desenvolvimento principal: Bruno C S Moraes · Contribuição ao projeto: [@dilucas00](https://github.com/dilucas00).
 
 ## Downloads
 
-Os pacotes da versão 3.5.0 estão na [página de lançamento](https://github.com/bruncosta077-boop/Cobre/releases/tag/cobre-desktop-v3.5.0):
+Os pacotes públicos mais recentes (3.5.0) estão na [página de lançamento](https://github.com/bruncosta077-boop/Cobre/releases/tag/cobre-desktop-v3.5.0). A versão 3.6.0 está em validação e ainda não deve ser instalada como atualização pública.
 
 - **Instalador:** `Cobre-3.5.0-x64.exe`
 - **Versão portátil:** `Cobre-3.5.0-x64.zip`

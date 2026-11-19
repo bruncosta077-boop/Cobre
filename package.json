@@ -1,6 +1,6 @@
 {
   "name": "cobre-desktop",
-  "version": "3.5.0",
+  "version": "3.6.0",
   "description": "Cobre, reprodutor de música local",
   "main": "main.js",
   "author": "Bruno C S Moraes",
@@ -11,11 +11,11 @@
     "dist": "electron-builder --win --x64"
   },
   "dependencies": {
-    "music-metadata": "^7.14.0"
+    "music-metadata": "12.7.0"
   },
   "devDependencies": {
     "electron": "45.3.4",
-    "electron-builder": "26.18.0"
+    "electron-builder": "26.18.1"
   },
   "build": {
     "appId": "com.cobre.desktop",
@@ -42,5 +42,8 @@
       "createDesktopShortcut": true,
       "perMachine": false
     }
+  },
+  "overrides": {
+    "minimatch": "^11.0.9"
   }
 }

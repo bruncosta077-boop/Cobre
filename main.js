@@ -387,7 +387,7 @@ app.on('window-all-closed', () => app.quit());
 try {
   require('./features-main')({ app, ipcMain, BrowserWindow, dialog, clipboard, nativeImage, screen, path, fs, crypto, mm, pathToFileURL, fileURLToPath, getWin: () => win, H: { curCover, ckey, customOf, clearCustom, CDIR, UA, queued, wait, LIB } });
 } catch (e) { console.error('features-main', e); }
-try { require('./cobre-id-main').init({ app, ipcMain, BrowserWindow, safeStorage, version: '3.5.0' }); } catch (e) { console.error('cobre-id', e); }
+try { require('./cobre-id-main').init({ app, ipcMain, BrowserWindow, safeStorage, version: app.getVersion() }); } catch (e) { console.error('cobre-id', e); }
 try { require('./update-main')({ app, ipcMain, getWin: () => win }); } catch (e) { console.error('cobre-updater', e); }
 
 
