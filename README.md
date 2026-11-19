@@ -10,11 +10,13 @@ O Cobre é um projeto em desenvolvimento para ouvir e organizar músicas locais.
 
 ### Cobre Desktop — Windows x64
 
-- [Instalador do Windows (.exe)](https://github.com/bruncosta077-boop/Cobre/releases/download/cobre-desktop-v3.2.0/Cobre-3.2.0-x64.exe)
-- [Versão portátil (.zip)](https://github.com/bruncosta077-boop/Cobre/releases/download/cobre-desktop-v3.2.0/Cobre-3.2.0-x64.zip)
-- [Página da versão 3.2.0](https://github.com/bruncosta077-boop/Cobre/releases/tag/cobre-desktop-v3.2.0)
+- [Instalador do Windows (.exe)](https://github.com/bruncosta077-boop/Cobre/releases/download/cobre-desktop-v3.2.1/Cobre-3.2.1-x64.exe)
+- [Versão portátil (.zip)](https://github.com/bruncosta077-boop/Cobre/releases/download/cobre-desktop-v3.2.1/Cobre-3.2.1-x64.zip)
+- [Página da versão 3.2.1](https://github.com/bruncosta077-boop/Cobre/releases/tag/cobre-desktop-v3.2.1)
 
 O ZIP portátil não precisa de instalação: extraia o arquivo e abra <code>Cobre.exe</code>. O app não tem assinatura digital, então o Windows pode exibir um aviso ao abrir.
+
+A Conta Cobre também pode ser aberta em **Configurações → Conta Cobre** ou pelo menu da bandeja. Entrar ou criar uma conta requer um servidor Cobre ID ativo, configurado na opção **Avançado** da janela.
 
 ### Cobre Mobile — Android
 
@@ -30,7 +32,7 @@ O APK é de depuração, e o projeto ainda precisa ser validado em um aparelho A
 
 | Versão | Plataforma | Situação |
 | --- | --- | --- |
-| Desktop 3.2.0 | Windows x64 | Instalador e ZIP disponíveis. O build foi empacotado, mas os recursos do player não foram validados funcionalmente nesta entrega. |
+| Desktop 3.2.1 | Windows x64 | Inclui acesso a Conta Cobre em Configurações. O build é empacotado, mas os recursos do player não foram validados funcionalmente nesta entrega. |
 | Mobile 0.1.0 | Android 10 ou superior | Protótipo em desenvolvimento; veja o [status](cobre-mobile/STATUS.md) e o [roadmap](cobre-mobile/ROADMAP.md). |
 
 ## Código-fonte

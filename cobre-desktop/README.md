@@ -1,8 +1,10 @@
 # Cobre Desktop
 
-Código-fonte do Cobre Desktop 3.2.0 para Windows.
+Código-fonte do Cobre Desktop 3.2.1 para Windows.
 
 O Cobre é um player de música local feito com Electron. Ele organiza arquivos de áudio por metadados e oferece reprodução, playlists, histórico, letras, capas e controles de áudio.
+
+O Cobre ID pode ser aberto em Configurações → Conta Cobre ou pelo menu da bandeja do Windows. Quando não há conta conectada, o app também apresenta a tela de conta ao iniciar. Para entrar ou criar uma conta, configure um servidor Cobre ID ativo na opção **Avançado** da janela. Sem login, a biblioteca local continua disponível.
 
 ## Executar para desenvolvimento
 

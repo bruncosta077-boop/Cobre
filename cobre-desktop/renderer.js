@@ -518,7 +518,7 @@ function setAccent(c) {
 }
 function gearHtml() {
   const z = Math.round((+localStorage.zoom || 1) * 100), a = localStorage.accent || ACC[0][1];
-  return `<p class="ph">Configurações</p><p class="mu">Tamanho da interface <span id="zv">${z}%</span></p><input type="range" id="zs" min="80" max="140" step="5" value="${z}">` +
+  return `<p class="ph">Configurações</p><div class="pr"><button class="lnk" data-act="account">Conta Cobre…</button></div><p class="mu">Tamanho da interface <span id="zv">${z}%</span></p><input type="range" id="zs" min="80" max="140" step="5" value="${z}">` +
     `<p class="mu">Cor de destaque</p><div class="pr">${ACC.map(([n, c]) => { const [x, y = x] = c.split('|'); return `<button class="swt${c === a ? ' on' : ''}" data-acc="${c}" title="${n}" style="background:${c === 'dyn' ? 'conic-gradient(#e8604c,#f6b45c,#5fd6e0,#8a63d2,#e8604c)' : `linear-gradient(135deg,${x},${y})`}"></button>`; }).join('')}</div>` +
     `<label class="net"><input type="checkbox" id="netc"${net ? ' checked' : ''}> Buscar capas e fotos ausentes online</label><label class="net"><input type="checkbox" id="phc"${phOn ? ' checked' : ''}> Foto do artista na aba Artistas</label><label class="net"><input type="checkbox" id="netl"${netL ? ' checked' : ''}> Buscar letras automaticamente</label><label class="net"><input type="checkbox" id="hrc"${hrOn ? ' checked' : ''}> Selo Hi-Res nas faixas</label><label class="net"><input type="checkbox" id="bgc"${localStorage.bg !== '0' ? ' checked' : ''}> Continuar tocando ao fechar a janela</label><p class="mu">Letras</p><div class="pr"><select id="lyst">${opts([['', 'Padrão'], ['hc', 'Alto contraste'], ['ac', 'Cor de destaque']], localStorage.lyst || '')}</select><select id="lysz">${opts([['', 'Tamanho normal'], ['l', 'Grande'], ['xl', 'Enorme']], localStorage.lysz || '')}</select></div>` +
     `<div class="pr"><button class="lnk" data-act="rescan">Reanalisar biblioteca</button><button class="lnk" data-act="unhide">Restaurar removidos</button><button class="lnk" data-act="health">Saúde do Cobre</button><button class="lnk" data-act="covers">Verificar capas</button><button class="lnk" data-act="about">Sobre e licença</button><button class="lnk" data-act="dev">Diagnóstico</button></div><p class="mu">Versão ${VERSION} · © 2026 Bruno C S Moraes</p>`;
@@ -537,6 +537,7 @@ $('#pop').onclick = (e) => {
   if (!t) return;
   if (t.dataset.dev) { $('#out').value = t.dataset.dev; $('#out').onchange({ target: $('#out') }); $('#outb').title = 'Saída: ' + t.textContent; $('#pop').hidden = true; }
   else if (t.dataset.acc) setAccent(t.dataset.acc);
+  else if (t.dataset.act === 'account') { $('#pop').hidden = true; api.ipc.send('cid:open'); }
   else if (t.dataset.act === 'pick') { $('#pop').hidden = true; pickFolder(); }
   else if (t.dataset.act === 'rescan') { $('#pop').hidden = true; if (localStorage.dir) load(localStorage.dir); }
   else if (t.dataset.act === 'unhide') { api.unhide().then(() => { $('#pop').hidden = true; if (localStorage.dir) load(localStorage.dir); toast('Itens restaurados na biblioteca'); }); }

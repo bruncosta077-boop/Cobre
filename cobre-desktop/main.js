@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain, globalShortcut, shell, nativeImage, Tray, Menu, clipboard, screen } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, globalShortcut, shell, nativeImage, Tray, Menu, clipboard, screen, safeStorage } = require('electron');
 const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
@@ -367,6 +367,7 @@ app.whenReady().then(() => {
       { label: 'Tocar / pausar', click: () => win.webContents.send('key', 'toggle') },
       { label: 'Próxima', click: () => win.webContents.send('key', 'next') },
       { label: 'Anterior', click: () => win.webContents.send('key', 'prev') },
+      { label: 'Conta Cobre…', click: () => { try { require('./cobre-id-main').open(); } catch (e) { console.error('cobre-id', e); } } },
       { type: 'separator' },
       { label: 'Sair do Cobre', click: () => { quitting = true; app.quit(); } }
     ]));
@@ -386,3 +387,4 @@ app.on('window-all-closed', () => app.quit());
 try {
   require('./features-main')({ app, ipcMain, BrowserWindow, dialog, clipboard, nativeImage, screen, path, fs, crypto, mm, pathToFileURL, fileURLToPath, getWin: () => win, H: { curCover, ckey, customOf, clearCustom, CDIR, UA, queued, wait, LIB } });
 } catch (e) { console.error('features-main', e); }
+try { require('./cobre-id-main').init({ app, ipcMain, BrowserWindow, safeStorage, version: '3.2.1' }); } catch (e) { console.error('cobre-id', e); }
