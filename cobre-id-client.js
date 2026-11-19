@@ -73,6 +73,7 @@ class CobreIdClient {
 
   devices() { return this._auth('GET', '/v1/devices').then((j) => j.devices); }
   removeDevice(id) { return this._auth('DELETE', '/v1/devices/' + id); }
+  authorizeDevice(userCode) { return this._auth('POST', '/v1/device/authorize', { userCode, approve: true }); }
   presence(meta = {}) { return this._auth('POST', '/v1/presence', { meta }); }
   async signOut() {
     try { await this._auth('POST', '/v1/logout', {}); } catch {}

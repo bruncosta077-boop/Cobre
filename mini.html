@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>Cobre</title>
+<style>
+:root{--bg:#181614;--ln:#2a2623;--tx:#ece6df;--mu:#8d847b;--cu:#c9773f;--cu2:#e6a06a}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%}
+body{position:relative;background:radial-gradient(ellipse at top,#28221d 0%,var(--bg) 68%);color:var(--tx);font:12px/1.35 "Segoe UI",sans-serif;padding:8px 10px 14px;border:1px solid var(--ln);display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:5px;-webkit-app-region:drag;overflow:hidden;user-select:none}
+.top{height:20px;width:100%;display:flex;justify-content:flex-end;align-items:center;gap:3px;-webkit-app-region:no-drag}
+.cw{position:relative;width:min(128px,42vw,46vh);flex:0 0 auto;align-self:center}
+#c{width:100%;aspect-ratio:1;border-radius:10px;background:#221f1c center/cover;box-shadow:0 6px 18px rgba(0,0,0,.32)}
+b,i{display:block;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-style:normal;text-align:center}
+b{font-size:12px;font-weight:600}
+i{color:var(--mu);font-size:10px;margin-top:1px}
+#p{width:100%;height:4px;background:var(--ln);border-radius:4px;overflow:hidden}
+#p div{height:100%;width:0;background:linear-gradient(90deg,var(--cu),var(--cu2))}
+.k{display:flex;align-items:center;justify-content:center;gap:12px;height:36px;width:100%;-webkit-app-region:no-drag}
+button{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08);padding:0;color:#c8bdb2;cursor:pointer;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;outline:none;flex:none;transition:background .15s,color .15s,transform .15s}
+button:hover{color:var(--tx);background:rgba(255,255,255,.13);transform:scale(1.06)}
+button:focus-visible{outline:2px solid var(--cu2);outline-offset:2px}
+button:active{transform:scale(.96)}
+#t{background:linear-gradient(135deg,var(--cu),var(--cu2));border:0;color:#181614;width:34px;height:34px}
+#t:hover{filter:brightness(1.12);color:#181614}
+svg{width:15px;height:15px;fill:currentColor;display:block}
+svg.st{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.top button{width:19px;height:19px;border:0;background:transparent;color:var(--mu)}
+.top button:hover{background:rgba(255,255,255,.1);color:var(--tx);transform:none}
+.top svg{width:12px;height:12px}
+.vr{height:22px;display:flex;align-items:center;justify-content:center;gap:7px;-webkit-app-region:no-drag}
+#vb{width:22px;height:22px;border:0;background:transparent;color:var(--mu)}
+#vb svg{width:14px;height:14px}
+#vp{width:112px;display:flex;align-items:center}
+#vp[hidden]{display:none}
+#vl{width:100%;height:3px;accent-color:var(--cu);cursor:pointer}
+#resize{position:absolute;right:1px;bottom:1px;width:12px;height:12px;cursor:nwse-resize;-webkit-app-region:no-drag;opacity:.48;background:linear-gradient(135deg,transparent 0 56%,var(--mu) 57% 62%,transparent 63% 72%,var(--mu) 73% 78%,transparent 79%);}
+#resize:hover{opacity:.95}
+</style></head>
+<body>
+<div class="top"><button id="op" aria-label="Abrir o Cobre" title="Abrir o Cobre (fecha o mini player)"><svg class="st" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button id="x" aria-label="Fechar" title="Fechar"><svg class="st" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+<div class="cw"><div id="c"></div></div>
+<div><b id="ti">Nada tocando</b><i id="ar"></i></div>
+<div id="p"><div></div></div>
+<div class="vr"><button id="vb" aria-label="Mostrar volume" title="Volume"><svg class="st" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4zM15.5 8.5a5 5 0 0 1 0 7M18 5.5a9 9 0 0 1 0 13"/></svg></button><div id="vp" hidden><input type="range" id="vl" min="0" max="100" value="80" aria-label="Volume"></div></div>
+<div class="k"><button id="pv" aria-label="Anterior"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9.5 12z"/></svg></button><button id="t" aria-label="Tocar ou pausar"></button><button id="nx" aria-label="Próxima"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5v14l10.5-7z"/></svg></button></div>
+<div id="resize" title="Arraste para redimensionar" aria-label="Redimensionar mini player"></div>
+<script>
+const $ = (s) => document.querySelector(s);
+const PLAY = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>', PAUSE = '<svg viewBox="0 0 24 24"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>';
+$('#t').innerHTML = PLAY;
+mini.onState((s) => {
+  $('#ti').textContent = s.title; $('#ar').textContent = s.artist;
+  $('#c').style.backgroundImage = s.cover ? `url("${s.cover}")` : '';
+  $('#t').innerHTML = s.playing ? PAUSE : PLAY;
+  $('#p div').style.width = (s.dur ? s.pos / s.dur * 100 : 0) + '%';
+  $('#vl').value = Math.round(s.volume ?? 80);
+  if (s.acc) { document.documentElement.style.setProperty('--cu', s.acc); document.documentElement.style.setProperty('--cu2', s.acc2 || s.acc); }
+});
+$('#pv').onclick = () => mini.cmd('prev'); $('#t').onclick = () => mini.cmd('toggle'); $('#nx').onclick = () => mini.cmd('next');
+$('#op').onclick = () => mini.show(); $('#x').onclick = () => mini.close();
+$('#vb').onclick = () => { $('#vp').hidden = !$('#vp').hidden; $('#vb').setAttribute('aria-label', $('#vp').hidden ? 'Mostrar volume' : 'Ocultar volume'); };
+$('#vl').oninput = (e) => mini.volume(+e.target.value);
+$('#resize').onpointerdown = (e) => { e.preventDefault(); const sx=e.screenX, sy=e.screenY, w=innerWidth, h=innerHeight; $('#resize').setPointerCapture(e.pointerId); const move=(m)=>mini.resize(w+m.screenX-sx,h+m.screenY-sy); const done=()=>{ $('#resize').removeEventListener('pointermove',move); $('#resize').removeEventListener('pointerup',done); }; $('#resize').addEventListener('pointermove',move); $('#resize').addEventListener('pointerup',done); };
+</script></body></html>

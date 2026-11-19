@@ -24,7 +24,7 @@ header>button:not(.tab){width:36px;height:36px;padding:0}
 #clk b{color:var(--tx);font-weight:600}
 #cclk{display:none}
 .cin #cclk{display:block;position:fixed;top:22px;left:26px;color:var(--mu);z-index:14;transition:opacity .5s}
-.cin.idle #cclk{opacity:0}
+.cin.idle #cclk{opacity:.85}
 .noclk #clk,.noclk #cclk{display:none!important}
 .cin #nx{grid-row:4;grid-column:1/3;text-align:left}
 .cin #left{grid-row:4;grid-column:3;text-align:right}
@@ -41,7 +41,7 @@ body.cvvon #cover{display:none}
 .intools{display:none!important}
 #clk{font-size:11px;margin-left:6px}
 .cin #vzb{display:none}
-.cin #cclk{font-size:13px}
+.cin #cclk{font-size:13px;top:22px;left:26px;right:auto;text-align:left;background:rgba(10,9,8,.55);padding:6px 10px;border-radius:8px;z-index:16}
 .picks-note{color:var(--mu);padding:0 4px}
 .card.pick{grid-column:span 2;display:flex;gap:18px;align-items:center;padding:14px;margin:0}
 .card.pick .cv{width:150px;flex:none}
@@ -55,7 +55,14 @@ body.cvvon #cover{display:none}
 .wab{display:inline-flex;align-items:center;gap:6px}
 #clk{display:none}
 .fs #clk{display:inline}
-.qh{display:flex;justify-content:space-between;align-items:center;padding:6px 10px}
+.qh{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 14px;margin:8px 0 14px;background:var(--pn);border:1px solid var(--ln);border-radius:10px}
+.qh-info{display:flex;flex-direction:column;gap:2px;min-width:130px}
+.qh-info b{font-size:14px;color:var(--tx)}
+.qh-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.qh-actions .lnk{display:inline-flex;align-items:center;justify-content:center;padding:7px 12px;border-radius:8px;border:1px solid var(--tr);white-space:nowrap}
+.qh-actions .queue-save{background:linear-gradient(135deg,var(--cu),var(--cu2));border-color:transparent;color:var(--bg)}
+.qh-actions .queue-clear{color:var(--mu)}
+.qh-actions .queue-clear:hover{border-color:#b3402e;color:#e07b6a}
 #queue .row{grid-template-columns:30px 1fr 1fr 96px 44px 34px}
 @media (max-width:900px){#queue .row{grid-template-columns:30px 1fr 96px 44px 34px}}
 #queue .row[draggable=true]{cursor:grab}
@@ -67,6 +74,11 @@ body.cvvon #cover{display:none}
 .encp{padding:28px 32px 48px;overflow:auto;font-family:Georgia,"Times New Roman",serif;color:#e4d9c8;min-height:0}
 .encp h2{margin:12px 0 4px;font-size:26px}
 .encp h3{margin:16px 0 6px;font-size:13px;color:var(--cu);font-weight:600}
+.enc-edition-label{display:block;margin:8px 0;color:var(--mu);font:12px system-ui,sans-serif}
+.enc-select{display:block;width:100%;margin-top:5px;padding:8px 10px;border:1px solid var(--ln);border-radius:7px;background:var(--bg);color:var(--tx);font:12px system-ui,sans-serif}
+.enc-refresh{display:inline-flex;margin:4px 0 8px;padding:6px 9px;border:1px solid var(--ln);border-radius:7px;color:var(--mu);font:12px system-ui,sans-serif;cursor:pointer}
+.enc-refresh:hover{border-color:var(--cu);color:var(--tx)}
+.enc-meta,.enc-source{font:12px/1.5 system-ui,sans-serif;color:var(--mu);margin:5px 0}
 .encp p{margin:2px 0;color:#a39684}
 .encp .tk{display:flex;gap:10px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer}
 .encp .tk span:last-child{margin-left:auto;color:#a39684}
@@ -86,16 +98,16 @@ FXH('symbols', () => {
 FXH('header', () => {
   const hdr = document.querySelector('header');
   const mk = (id, icon, title, fn, hidden) => { const b = document.createElement('button'); b.id = id; b.title = title; b.setAttribute('aria-label', title); b.innerHTML = `<svg><use href="#i-${icon}"/></svg>`; b.onclick = fn; if (hidden) b.hidden = true; hdr.appendChild(b); return b; };
-  hdr.insertBefore(mk('ghost', 'eye', 'Mostrar álbuns que faltam (em fade)', () => { ghostOn = !ghostOn; localStorage.ghost = ghostOn ? '1' : '0'; render(); }, true), $('#vsel'));
+  const ghost = mk('ghost', 'eye', 'Mostrar álbuns que faltam (em fade)', () => { ghostOn = !ghostOn; localStorage.ghost = ghostOn ? '1' : '0'; render(); }, true);
+  $('#library-tools').insertBefore(ghost, $('#vsel').closest('.toolbar-field'));
   mk('tools', 'more', 'Ferramentas', (e) => openPop(e.currentTarget, toolsHtml())).setAttribute('data-pop', '');
-  ['dice', 'pick', 'fsb'].forEach((id) => { if ($('#' + id)) $('#' + id).classList.add('intools'); });
   hdr.insertAdjacentHTML('beforeend', '<span id="clk"></span>');
   document.body.insertAdjacentHTML('beforeend', '<div id="cclk"></div>');
   $('#vsel').insertAdjacentHTML('beforeend', '<option value="picks">Indicações (dia e mês)</option><option value="discover">Descobrir (fora da biblioteca)</option>');
   if (localStorage.clk === '0') document.body.classList.add('noclk');
 });
 function toolsHtml() {
-  return '<p class="ph">Ferramentas</p>' + [['dice', 'Álbum aleatório'], ['folder', 'Biblioteca e pasta…'], ['full', 'Tela cheia (F11)'], ['cinema', 'Modo cinema'], ['ai', 'Assistente com IA…'], ['mini', 'Mini player']].map(([k, n]) => `<button class="it" data-tool="${k}">${n}</button>`).join('');
+  return '<p class="ph">Mais opções</p>' + [['ai', 'Assistente com IA…'], ['mini', 'Mini player']].map(([k, n]) => `<button class="it" data-tool="${k}">${n}</button>`).join('');
 }
 function runTool(k) {
   ({ dice: () => rollAlbum(), folder: () => openPop($('#tools'), folderHtml()), full: () => api.fullscreen(), cinema: () => setCinema(true), ai: () => aiDlg(), mini: () => api.ipc.invoke('miniToggle') })[k]();
@@ -339,7 +351,7 @@ function afterRender() {
     const acts = $('#list .acts');
     if (acts && !acts.querySelector('[data-bonus]')) {
       const all = a._all || a.tracks, n = all.filter(isBonus).length, hide = !!bonusHide[rk(a)];
-      acts.insertAdjacentHTML('beforeend', `<button class="lnk" data-bonus>${n ? (hide ? `Mostrar ${n} bônus` : `Ocultar ${n} bônus`) : 'Faixas bônus'}</button><button class="lnk" data-editalb>Editar informações</button><button class="lnk" data-credits>Créditos</button><button class="lnk" data-booklet>Encarte</button>`);
+      acts.insertAdjacentHTML('beforeend', `<button class="lnk" data-bonus>${n ? (hide ? `Mostrar ${n} bônus` : `Ocultar ${n} bônus`) : 'Faixas bônus'}</button><button class="lnk" data-editalb>Editar informações</button><button class="lnk" data-booklet>Encarte</button>`);
     }
     const st = $('#list .stars');
     if (st && !st.querySelector('[data-share]')) st.insertAdjacentHTML('beforeend', '<button class="ibtn" data-share title="Compartilhar" aria-label="Compartilhar"><svg><use href="#i-share"/></svg></button>');
@@ -549,7 +561,7 @@ FXH('mini', () => {
   setInterval(() => {
     if (!miniOpen) return;
     const t = cur(), m = $('#cover').style.backgroundImage.match(/url\("?(.*?)"?\)/);
-    api.ipc.send('miniState', { title: t ? t.title : 'Nada tocando', artist: t ? t.artist : '', cover: m ? m[1] : '', playing: !audio.paused, pos: audio.currentTime || 0, dur: audio.duration || 0, acc: acc(), acc2: acc2() });
+    api.ipc.send('miniState', { title: t ? t.title : 'Nada tocando', artist: t ? t.artist : '', cover: m ? m[1] : '', playing: !audio.paused, pos: audio.currentTime || 0, dur: audio.duration || 0, volume: Math.round(master.gain.value * 100), acc: acc(), acc2: acc2() });
   }, 500);
 });
 FXH('lastfm', () => { api.ipc.invoke('lfStatus').then((s) => { lfOn = !!s.connected; }); });
@@ -571,6 +583,7 @@ FXH('gear', () => {
     const tl = e.target.closest('[data-tool]');
     if (tl) { $('#pop').hidden = true; return runTool(tl.dataset.tool); }
     const t = e.target.closest('[data-act]'), a = t && t.dataset.act;
+    if (a === 'updates') { $('#pop').hidden = true; return updateDlg(); }
     if (a === 'remote') { $('#pop').hidden = true; return remoteDlg(); }
     if (a === 'lastfm') { $('#pop').hidden = true; return lfDlg(); }
     if (a === 'covreset') { $('#pop').hidden = true; return covResetDlg(); }
@@ -588,6 +601,37 @@ FXH('gear', () => {
     if (e.target.id === 'tbdr') { TB.drive = +e.target.value; localStorage.tbdr = TB.drive; applyTubeGains(); return; }
     pi(e);
   };
+});
+let updateBusy = false;
+async function updateDlg() {
+  toast('Verificando atualizações do Cobre…', true);
+  const check = await api.ipc.invoke('cobreUpdateCheck').catch((e) => ({ok:false,error:String(e.message||e)}));
+  $('#toast').hidden = true;
+  if (!check.ok) return dlg({title:'Atualizar Cobre',text:check.error||'Não consegui verificar agora.',buttons:[{label:'Fechar',v:true}]});
+  const d=check.data;
+  if(d.readyToInstall){const go=await dlg({title:`Cobre ${d.version} pronto`,text:'A atualização já foi baixada e verificada.',buttons:[{label:'Depois',v:false},{label:'Instalar e reiniciar',v:true}]});if(go.v){const r=await api.ipc.invoke('cobreUpdateInstall').catch((e)=>({ok:false,error:String(e.message||e)}));if(!r.ok)dlg({title:'Instalação não iniciada',text:r.error,buttons:[{label:'Fechar',v:true}]});}return;}
+  if(!d.updateAvailable) return dlg({title:'Cobre atualizado',text:d.current===d.version?`Você está usando a versão mais recente (${d.current}).`:`Não há atualização pública posterior. Esta cópia (${d.current}) está mais nova que a última versão publicada (${d.version}).`,buttons:[{label:'Fechar',v:true}]});
+  const notes=esc(d.notes||'Esta versão não publicou notas de atualização.').slice(0,24000);
+  if(!d.supported) return dlg({title:'Atualização não disponível nesta edição',text:'A atualização direta funciona na edição portátil descompactada do Cobre. Baixe e instale a edição atualizada pelo canal de distribuição.',buttons:[{label:'Fechar',v:true}]});
+  if(!d.packageAvailable) return dlg({title:`Cobre ${d.version} disponível`,html:`<p>Esta versão foi publicada, mas ainda não tem o pacote de atualização interna.</p><p class="mu">Por enquanto, atualize pelo pacote completo. Quando o ZIP de atualização for anexado à release, o Cobre poderá instalá-lo diretamente aqui.</p><div style="max-height:220px;overflow:auto;white-space:pre-wrap;padding:10px;border:1px solid var(--ln);border-radius:8px">${notes}</div>`,buttons:[{label:'Fechar',v:true}]});
+  const choice=await dlg({title:`Atualização ${d.version}`,html:`<p>Versão atual: ${d.current} · Download: ${(d.size/1048576).toFixed(1)} MB</p><p class="mu">Notas da versão</p><div style="max-height:240px;overflow:auto;white-space:pre-wrap;padding:10px;border:1px solid var(--ln);border-radius:8px">${notes}</div>`,buttons:[{label:'Agora não',v:false},{label:'Baixar atualização',v:'download'}]});
+  if(choice.v!=='download') return;
+  updateBusy=true; toast('Preparando download da atualização…',true);
+  const downloaded=await api.ipc.invoke('cobreUpdateDownload',d.version).catch((e)=>({ok:false,error:String(e.message||e)}));
+  updateBusy=false; $('#toast').hidden=true;
+  if(!downloaded.ok) return dlg({title:'Não foi possível baixar',text:downloaded.error||'O download falhou.',buttons:[{label:'Fechar',v:true}]});
+  const install=await dlg({title:`Cobre ${d.version} pronto`,html:`<p>O pacote foi baixado e verificado. O Cobre vai fechar e reabrir para aplicar a atualização.</p><p class="mu">Notas da versão</p><div style="max-height:220px;overflow:auto;white-space:pre-wrap;padding:10px;border:1px solid var(--ln);border-radius:8px">${notes}</div>`,buttons:[{label:'Depois',v:false},{label:'Instalar e reiniciar',v:true}]});
+  if(!install.v) return toast('Atualização baixada; você pode instalar depois em Configurações → Atualizar Cobre');
+  const started=await api.ipc.invoke('cobreUpdateInstall').catch((e)=>({ok:false,error:String(e.message||e)}));
+  if(!started.ok) dlg({title:'Instalação não iniciada',text:started.error||'Tente novamente.',buttons:[{label:'Fechar',v:true}]});
+}
+FXH('updates', () => {
+  api.ipc.on('cobreUpdateProgress',(p)=>{if(updateBusy)toast(`Baixando atualização… ${p.percent}%`,true);});
+  api.ipc.invoke('cobreUpdateTakeNotice').then((n)=>{
+    if(!n)return;
+    if(n.kind==='installed') dlg({title:`Cobre atualizado · ${n.version}`,html:`<p>A atualização foi instalada com sucesso.</p><p class="mu">O que mudou</p><div style="max-height:280px;overflow:auto;white-space:pre-wrap;padding:10px;border:1px solid var(--ln);border-radius:8px">${esc(n.notes||'Sem notas nesta versão.').slice(0,24000)}</div>`,buttons:[{label:'Continuar',v:true}]});
+    else dlg({title:'A atualização não foi concluída',text:n.error||'Os arquivos anteriores foram restaurados. Você pode tentar novamente depois.',buttons:[{label:'Fechar',v:true}]});
+  }).catch(()=>{});
 });
 // ---------- corretor de informações do álbum e faixas bônus
 function applyOv() {
@@ -640,7 +684,7 @@ menuFor = function (tracks, o = {}) {
   const items = _mf2(tracks, o), i = items.indexOf('-'), extra = [];
   if (tracks.length === 1) { const t = tracks[0], b = isBonus(t); extra.push({ label: b ? 'Desmarcar faixa bônus' : 'Marcar como faixa bônus', fn: () => { bonusMap[t.path] = !b; api.ipc.send('bonusSave', bonusMap); render(); } }); }
   if (tracks.length === 1) extra.push({ label: 'Editar informações da faixa…', fn: () => editTrackDlg(tracks[0]) });
-  if (o.cover) extra.push({ label: 'Editar informações do álbum…', fn: () => editAlbumDlg(o.cover) }, { label: 'Créditos…', fn: () => creditsDlg(o.cover) }, { label: 'Encarte…', fn: () => encDlg(o.cover) });
+  if (o.cover) extra.push({ label: 'Editar informações do álbum…', fn: () => editAlbumDlg(o.cover) }, { label: 'Encarte…', fn: () => encDlg(o.cover) });
   items.splice(i < 0 ? items.length : i, 0, ...extra);
   return items;
 };
@@ -682,7 +726,7 @@ renderQueue = function () {
   const info = [t.album, al && al.year, al && al.genre, al && al.tracks.length + ' faixas', al && al.dur ? fmtLong(al.dur) : ''].filter(Boolean).join(' · ');
   const rest = q.slice(pos + 1, pos + 301);
   recs = recommend(t);
-  el.innerHTML = `<div class="qh"><span class="mu">${q.length - pos - 1} a seguir</span><span><button class="lnk" data-qclear>Limpar</button> <button class="lnk" data-qsave>Salvar como playlist</button></span></div>` +
+  el.innerHTML = `<div class="qh"><div class="qh-info"><b>Fila</b><span class="mu">${q.length - pos - 1} faixas a seguir</span></div><div class="qh-actions"><button class="lnk queue-save" data-qsave>Salvar fila completa como playlist</button><button class="lnk queue-clear" data-qclear>Limpar próximas</button></div></div>` +
     '<p class="sec">Tocando agora</p>' + row(t, `data-p="${pos}"`, '▸', ' cur') + `<p class="mu" style="margin:4px 10px 0">${esc(info)}</p>` +
     (rest.length ? '<p class="sec">A seguir <span class="mu">(arraste para reordenar)</span></p>' + rest.map((x, i) => row(x, `data-p="${pos + 1 + i}" draggable="true"`, i + 1)).join('') : '<p class="mu" style="margin:10px">Nada na fila depois desta faixa.</p>') +
     (recs.length ? '<p class="sec">Para ouvir depois</p><div class="rgrid">' + recs.map((x, i) => `<div class="card" data-ra="${i}"><div class="cv"></div><b>${esc(x.g.album || 'Sem álbum')}</b><i>${esc([x.g.artist, x.g.year || ''].filter(Boolean).join(' · '))}</i><span class="why">${esc(x.why)}</span></div>`).join('') + '</div>' : '');
@@ -736,31 +780,79 @@ async function creditsDlg(g) {
   await dlg({ title: 'Créditos · ' + g.album, html: creditsHtml(d), buttons: [{ label: 'Fechar', v: true }] });
 }
 
-let encG = null, encS = 0, encC = null;
+let encG = null, encS = 0, encC = null, encReleases = [], encReleaseId = '', encSearchState = 'idle', encRequest = 0;
 FXH('booklet', () => {
   document.body.insertAdjacentHTML('beforeend', '<div id="enc" hidden><div class="encb"><button id="encx" class="ibtn" aria-label="Fechar encarte" title="Fechar (Esc)"><svg><use href="#i-x"/></svg></button><div class="encp" id="encl"></div><div class="encp" id="encr"></div><div class="encn"><button id="encp" class="ibtn" aria-label="Anterior">‹</button><span id="encs"></span><button id="encn" class="ibtn" aria-label="Próxima">›</button></div></div></div>');
-  $('#encx').onclick = () => { $('#enc').hidden = true; };
-  $('#enc').onclick = (e) => { if (e.target.id === 'enc') $('#enc').hidden = true; };
+  const closeBooklet = () => { encRequest++; $('#enc').hidden = true; };
+  $('#encx').onclick = closeBooklet;
+  $('#enc').onclick = (e) => {
+    if (e.target.id === 'enc') closeBooklet();
+    else if (e.target.closest('[data-enc-refresh]')) { e.preventDefault(); e.stopPropagation(); if (encG) encSearch(encG, true); }
+  };
+  $('#enc').onchange = (e) => { if (e.target.id === 'encRelease') encLoadCredits(e.target.value); };
   $('#encp').onclick = () => { encS = 0; encRender(); };
   $('#encn').onclick = () => { encS = 1; encRender(); };
   $('#encr').onclick = (e) => { const r = e.target.closest('.tk'); if (r && encG) { const keep = view; view = encG.tracks; start(encG.tracks[+r.dataset.ti]); view = keep; } };
-  addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#enc').hidden) { $('#enc').hidden = true; e.stopPropagation(); } }, true);
+  addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#enc').hidden) { closeBooklet(); e.stopPropagation(); } }, true);
 });
 async function encDlg(g) {
   if (!g) return;
-  encG = g; encS = 0; encC = null; $('#enc').hidden = false; encRender();
-  getCredits(g).then((d) => { encC = d || false; if (encG === g) encRender(); });
+  encG = g; encS = 0; encC = null; encReleases = []; encReleaseId = ''; encSearchState = 'idle'; $('#enc').hidden = false;
+  encRender(); encSearch(g, false);
+}
+async function encSearch(g, refresh) {
+  const token = ++encRequest;
+  encSearchState = 'searching'; encC = null; encReleases = []; encReleaseId = ''; encRender();
+  let found;
+  try { found = await api.ipc.invoke('bookletSearch', g.artist, g.album, g.year || 0, g.tracks.length, !!refresh); } catch { found = null; }
+  if (token !== encRequest || encG !== g || $('#enc').hidden) return;
+  if (found === null) { encSearchState = 'error'; encC = false; encRender(); return; }
+  encReleases = Array.isArray(found) ? found : [];
+  if (!encReleases.length) { encSearchState = 'empty'; encC = false; encRender(); return; }
+  encSearchState = 'ready'; encReleaseId = encReleases[0].id; encRender();
+  encLoadCredits(encReleaseId);
+}
+async function encLoadCredits(id) {
+  if (!encG || !id) return;
+  const g = encG, token = ++encRequest;
+  encReleaseId = id; encC = null; encSearchState = 'loadingCredits'; encRender();
+  let d;
+  try { d = await api.ipc.invoke('bookletCredits', id); } catch { d = null; }
+  if (token !== encRequest || encG !== g || encReleaseId !== id || $('#enc').hidden) return;
+  encC = d || false; encSearchState = 'ready'; encRender();
+}
+function encReleaseOption(x) {
+  const meta = [x.date ? x.date.slice(0, 4) : '', x.country || '', x.format || '', x.label || ''].filter(Boolean).join(' · ');
+  return '<option value="' + esc(x.id) + '"' + (x.id === encReleaseId ? ' selected' : '') + '>' + esc(x.title + (meta ? ' · ' + meta : '')) + '</option>';
+}
+function encEditionControl() {
+  if (encReleases.length) return '<label class="mu enc-edition-label">Escolha a edição que corresponde à sua cópia<select id="encRelease" class="enc-select">' + encReleases.map(encReleaseOption).join('') + '</select></label><button class="lnk enc-refresh" data-enc-refresh>Atualizar busca</button>';
+  const msg = encSearchState === 'searching' ? 'Buscando álbum e edições no MusicBrainz…' : encSearchState === 'error' ? 'Não consegui consultar o MusicBrainz agora.' : encSearchState === 'empty' ? 'Não encontrei edições correspondentes para este álbum.' : 'Busca ainda não iniciada.';
+  return '<p class="mu">' + msg + '</p><button class="lnk enc-refresh" data-enc-refresh>Tentar novamente</button>';
 }
 async function encRender() {
-  const g = encG, u = await getCover(g.tracks[0]), r = revs[rk(g)] || {}, d = encC;
-  const dur = g.tracks.reduce((s, t) => s + (t.dur || 0), 0), pend = d === null ? '<p>Carregando créditos…</p>' : d === false ? '<p>Créditos não encontrados no MusicBrainz.</p>' : '';
+  const g = encG, token = encRequest;
+  if (!g) return;
+  const u = await getCover(g.tracks[0]), r = revs[rk(g)] || {}, d = encC;
+  if (encG !== g || token !== encRequest || $('#enc').hidden) return;
+  const dur = g.tracks.reduce((s, t) => s + (t.dur || 0), 0);
   let L, R;
   if (encS === 0) {
     L = `<img src="${u || ''}" alt=""><h2>${esc(g.album)}</h2><p>${esc(g.artist)}${g.year ? ' · ' + g.year : ''}${g.genre ? ' · ' + esc(g.genre) : ''}</p>`;
     R = `<h3>Faixas</h3>${g.tracks.map((t, i) => `<div class="tk" data-ti="${i}"><span>${t.no || i + 1}</span><span>${esc(t.title)}</span><span>${fmt(t.dur)}</span></div>`).join('')}<p style="margin-top:8px">${g.tracks.length} faixas${dur ? ' · ' + fmtLong(dur) : ''}</p>`;
   } else {
-    L = `<h3>Edição</h3>${d ? `<p>${[d.label, d.catalog, d.date, d.country].filter(Boolean).map(esc).join(' · ') || 'Sem dados.'}</p>` : pend}<h3>Produção e técnica</h3>${d ? credList(d.production) : pend}`;
-    R = `<h3>Músicos</h3>${d ? credList(d.musicians) : pend}<h3>Minha review</h3><p style="color:var(--cu)">${'★'.repeat(r.stars || 0) || 'Sem nota'}</p><p style="color:#e4d9c8">${esc(r.text || '')}</p>`;
+    const chosen = encReleases.find((x) => x.id === encReleaseId);
+    const edition = d && [d.date, d.country, d.format, d.label, d.catalog].filter(Boolean).map(esc).join(' · ');
+    const facts = d && [d.releaseGroup, d.firstReleaseDate ? 'Original: ' + d.firstReleaseDate : '', d.releaseType, ...(d.genres || [])].filter(Boolean).map(esc).join(' · ');
+    const hasCredits = !!(d && (d.production.length || d.musicians.length));
+    const noCredits = d === null ? '<p>Carregando créditos…</p>' : d === false ? '<p>Não consegui carregar os créditos desta edição agora. Tente escolher outra edição ou atualizar a busca.</p>' : '<p>Esta edição foi encontrada, mas os créditos ainda não estão cadastrados no MusicBrainz.</p>';
+    L = '<h3>Álbum e edição</h3>' + encEditionControl() +
+      (edition ? '<p class="mu enc-meta">' + edition + '</p>' : chosen ? '<p class="mu enc-meta">' + esc(chosen.title) + '</p>' : '') +
+      (facts ? '<p class="mu enc-meta">' + facts + '</p>' : '') +
+      '<h3>Produção e técnica</h3>' + (hasCredits ? credList(d.production) : noCredits);
+    R = '<h3>Músicos</h3>' + (hasCredits ? credList(d.musicians) : noCredits) +
+      '<p class="mu enc-source">Fonte: MusicBrainz. Os dados variam conforme a edição e os créditos cadastrados.</p>' +
+      '<h3>Minha review</h3><p style="color:var(--cu)">' + ('★'.repeat(r.stars || 0) || 'Sem nota') + '</p><p style="color:#e4d9c8">' + esc(r.text || '') + '</p>';
   }
   $('#encl').innerHTML = L; $('#encr').innerHTML = R; $('#encs').textContent = `${encS + 1} / 2`;
 }

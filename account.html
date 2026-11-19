@@ -17,6 +17,7 @@
   .dot{width:10px;height:10px;border-radius:50%;background:var(--mu);flex:none} .dot.on{background:var(--ok)}
   .dev .n{flex:1;min-width:0} .dev .n b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .small{font-size:12px} .hide{display:none}
+  .pairrow{display:flex;gap:8px;align-items:center}.pairrow input{flex:1;min-width:0;text-transform:uppercase;letter-spacing:.12em}.pairrow button{flex:none}
 </style></head><body>
 <h1>Conta Cobre</h1>
 <div class="mu">Uma conta para o computador, o celular e a TV.</div>
@@ -36,6 +37,12 @@
   <div><b id="me"></b></div>
   <div class="small mu" id="srvTxt"></div>
   <div class="small" id="link" style="margin-top:8px"></div>
+</div>
+<div id="pair" class="card hide">
+  <b>Vincular uma TV</b>
+  <div class="small mu" style="margin:6px 0 10px">Digite o código exibido no Cobre TV. Isso adiciona a TV à sua conta; a conexão com a biblioteca do computador será ativada numa próxima etapa.</div>
+  <div class="pairrow"><input id="tvCode" maxlength="9" placeholder="ABCD-2345" aria-label="Código exibido na TV"><button class="pri" id="tvApprove">Autorizar TV</button></div>
+  <div class="err" id="pairErr"></div>
 </div>
 <div id="devs" class="card hide"><b>Seus dispositivos</b><div id="list" style="margin-top:6px"></div>
   <div class="err" id="err2"></div></div>
@@ -82,7 +89,7 @@ async function render() {
   const r = await api.status(); const s = r.data;
   const logged = r.ok && s.loggedIn;
   for (const id of ['out']) $(id).classList.toggle('hide', logged);
-  for (const id of ['in', 'devs', 'outRow']) $(id).classList.toggle('hide', !logged);
+  for (const id of ['in', 'pair', 'devs', 'outRow']) $(id).classList.toggle('hide', !logged);
   if (!logged) {
     if (r.ok) { $('email').value = s.email || ''; $('srv').value = s.server || s.defaultServer || 'http://localhost:8080'; }
     return;
@@ -109,6 +116,15 @@ $('bin').onclick = () => go(false); $('bnew').onclick = () => go(true);
 $('blater').onclick = () => api.close(); $('bnever').onclick = () => api.never();
 $('pw').addEventListener('keydown', (e) => { if (e.key === 'Enter') go(false); });
 $('bout').onclick = async () => { if (confirm('Sair desta conta neste computador?')) { await api.logout(); render(); } };
+$('tvCode').addEventListener('input', (e) => { const v=e.target.value.replace(/[^a-z0-9]/gi,'').toUpperCase().slice(0,8); e.target.value=v.length>4?v.slice(0,4)+'-'+v.slice(4):v; });
+$('tvApprove').onclick = async () => {
+  $('pairErr').textContent=''; $('tvApprove').disabled=true;
+  const r=await api.authorizeDevice($('tvCode').value);
+  $('tvApprove').disabled=false;
+  if(!r.ok){$('pairErr').textContent=r.error;return;}
+  $('pairErr').style.color='var(--ok)'; $('pairErr').textContent='TV adicionada à Conta Cobre. O acesso à biblioteca do PC será ligado numa próxima etapa.';
+  $('tvCode').value=''; drawDevices();
+};
 api.onLink(setLink);
 render();
 </script></body></html>

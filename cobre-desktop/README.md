@@ -1,6 +1,6 @@
 # Cobre Desktop
 
-Código-fonte do Cobre Desktop 3.2.1 para Windows.
+Código-fonte do Cobre Desktop 3.5.0 para Windows.
 
 O Cobre é um player de música local feito com Electron. Ele organiza arquivos de áudio por metadados e oferece reprodução, playlists, histórico, letras, capas e controles de áudio.
 
@@ -32,3 +32,11 @@ Este snapshot contém o código-fonte da aplicação. Não há suíte de testes 
 ## Privacidade
 
 Não envie bibliotecas, credenciais ou dados pessoais do usuário. Arquivos de configuração e dados de execução locais estão listados no `.gitignore`.
+
+
+
+
+## Atualizações no app
+
+Na versão 3.5, abra **Configurações → Atualizar Cobre** para consultar a última release pública. Releases novas devem incluir o anexo Cobre-Update-vX.Y.Z-x64.zip, criado por scripts/package-update.ps1; o texto da release vira as notas exibidas após a instalação. O updater verifica a origem GitHub e o SHA-256 publicado pela API antes de substituir arquivos em `resources/app`. O pacote de atualização não substitui o runtime do Electron e funciona na distribuição portátil com a pasta `resources/app` descompactada.
+

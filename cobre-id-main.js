@@ -50,6 +50,7 @@ function init(c) {
   ipcMain.handle('cid:logout', wrap(async () => { stopBeat(); await make().signOut(); link = { ok: false, text: 'Sem conta conectada' }; }));
   ipcMain.handle('cid:devices', wrap(() => make().devices()));
   ipcMain.handle('cid:remove', wrap((id) => make().removeDevice(id)));
+  ipcMain.handle('cid:authorizeDevice', wrap((code) => make().authorizeDevice(code)));
   ipcMain.handle('cid:close', wrap(async () => { if (win && !win.isDestroyed()) win.close(); }));
   ipcMain.handle('cid:never', wrap(async () => { const m = make(); m.s.neverAsk = true; m._save(); if (win && !win.isDestroyed()) win.close(); }));
 

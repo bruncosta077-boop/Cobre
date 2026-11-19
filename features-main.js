@@ -210,8 +210,8 @@ module.exports = function (X) {
   const closeMini = () => { if (mini && !mini.isDestroyed()) mini.close(); };
   ipcMain.handle('miniToggle', () => {
     if (mini && !mini.isDestroyed()) { mini.close(); return false; }
-    const wa = screen.getPrimaryDisplay().workArea, W = 206, Hh = 264;
-    mini = new BrowserWindow({ width: W, height: Hh, x: wa.x + wa.width - W - 20, y: wa.y + wa.height - Hh - 20, frame: false, resizable: false, alwaysOnTop: true, skipTaskbar: true, backgroundColor: '#181614', title: 'Cobre', icon: path.join(__dirname, 'icon.ico'), webPreferences: { preload: path.join(__dirname, 'mini-preload.js'), webSecurity: false, backgroundThrottling: false } });
+    const wa = screen.getPrimaryDisplay().workArea, W = 244, Hh = 320;
+    mini = new BrowserWindow({ width: W, height: Hh, minWidth: 220, minHeight: 270, maxWidth: 460, maxHeight: 620, x: wa.x + wa.width - W - 20, y: wa.y + wa.height - Hh - 20, frame: false, resizable: true, alwaysOnTop: true, skipTaskbar: true, backgroundColor: '#181614', title: 'Cobre', icon: path.join(__dirname, 'icon.ico'), webPreferences: { preload: path.join(__dirname, 'mini-preload.js'), webSecurity: false, backgroundThrottling: false } });
     mini.removeMenu(); mini.loadFile('mini.html');
     const w = getWin();
     if (w) { w.on('show', closeMini); w.on('restore', closeMini); }
@@ -220,6 +220,14 @@ module.exports = function (X) {
     return true;
   });
   ipcMain.on('miniState', (_e, s) => { if (mini && !mini.isDestroyed()) mini.webContents.send('state', s); });
+  ipcMain.on('miniVolume', (_e, value) => { const w = getWin(); if (w && !w.isDestroyed()) w.webContents.send('miniVolume', Math.max(0, Math.min(100, Number(value) || 0))); });
+  ipcMain.on('miniResize', (_e, size) => {
+    if (!mini || mini.isDestroyed() || !size) return;
+    const wa = screen.getDisplayMatching(mini.getBounds()).workArea, b = mini.getBounds();
+    const width = Math.max(220, Math.min(460, Math.round(Number(size.width) || b.width)));
+    const height = Math.max(270, Math.min(620, Math.round(Number(size.height) || b.height)));
+    mini.setBounds({ x: Math.max(wa.x, Math.min(b.x + b.width - width, wa.x + wa.width - width)), y: Math.max(wa.y, Math.min(b.y + b.height - height, wa.y + wa.height - height)), width, height });
+  });
   ipcMain.on('miniCmd', (_e, c) => send('key', c));
   ipcMain.on('miniClose', closeMini);
   ipcMain.on('miniShow', () => { const w = getWin(); closeMini(); if (w) { w.show(); w.focus(); } });
@@ -289,6 +297,103 @@ module.exports = function (X) {
       const d = { date: j.date || '', country: j.country || '', label: (li.label || {}).name || '', catalog: li['catalog-number'] || '', production: list(prod), musicians: list(who) };
       writeJ(f, { t: Date.now(), d });
       return d;
+    } catch { return null; }
+  });
+  const creditDataForRelease = (j) => {
+    const who = new Map(), prod = new Map();
+    const add = (list, map) => (list || []).forEach((x) => { if (!x.artist) return; const role = [x.type, ...(x.attributes || [])].filter(Boolean).join(': '); map.set(x.artist.name, [...(map.get(x.artist.name) || []), role]); });
+    add(j.relations, prod);
+    (j.media || []).forEach((md) => (md.tracks || []).forEach((tr) => add(tr.recording && tr.recording.relations, who)));
+    const list = (mp) => [...mp.entries()].map(([name, roles]) => ({ name, roles: [...new Set(roles)].slice(0, 6) })).slice(0, 40);
+    const li = (j['label-info'] || [])[0] || {}, rg = j['release-group'] || {};
+    return {
+      id: j.id, title: j.title || '', date: j.date || '', country: j.country || '', status: j.status || '',
+      label: (li.label || {}).name || '', catalog: li['catalog-number'] || '', packaging: j.packaging || '',
+      format: [...new Set((j.media || []).map((m) => m.format).filter(Boolean))].join(', '),
+      trackCount: (j.media || []).reduce((s, m) => s + (m['track-count'] || (m.tracks || []).length), 0),
+      firstReleaseDate: rg['first-release-date'] || '', releaseGroup: rg.title || '',
+      releaseType: [rg['primary-type'], ...(rg['secondary-types'] || [])].filter(Boolean).join(' · '),
+      genres: (rg.genres || j.genres || []).map((x) => x.name).filter(Boolean).slice(0, 5),
+      production: list(prod), musicians: list(who)
+    };
+  };
+  const releaseCreditsById = async (id) => {
+    if (!/^[0-9a-f-]{36}$/i.test(String(id || ''))) return null;
+    const f = 'credits-release-' + id + '.json', c = readJ(f, null);
+    if (c && Date.now() - c.t < 30 * 864e5) return c.d;
+    try {
+      const r = await queued(() => fetch('https://musicbrainz.org/ws/2/release/' + id + '?inc=labels+artist-rels+recordings+recording-level-rels+release-groups&fmt=json', { headers: UA }));
+      if (!r.ok) return null;
+      const d = creditDataForRelease(await r.json());
+      writeJ(f, { t: Date.now(), d });
+      return d;
+    } catch { return null; }
+  };
+  ipcMain.handle('bookletCredits', (_e, id) => releaseCreditsById(id));
+  ipcMain.handle('bookletSearch', async (_e, artist, album, year, trackCount, refresh = false) => {
+    const key = crypto.createHash('md5').update(norm2(artist) + '|' + norm2(album) + '|' + (+year || 0) + '|' + (+trackCount || 0)).digest('hex');
+    const cacheFile = 'booklet-search-' + key + '.json', cached = readJ(cacheFile, null);
+    if (!refresh && cached && Date.now() - cached.t < 7 * 864e5) return cached.items;
+    const safeTerm = (s) => String(s || '').replace(/[+\-!(){}\[\]^"~*?:\\/]/g, '\\$&');
+    const na = norm2(album), nr = norm2(artist);
+    const names = (ac) => (ac || []).map((x) => x.name || (x.artist && x.artist.name) || '').filter(Boolean).join(' ');
+    const titleScore = (title) => { const n = norm2(title); return n === na ? 100 : (n && (n.includes(na) || na.includes(n)) ? 65 : 25); };
+    const artistScore = (name) => { const n = norm2(name); return n === nr ? 45 : (n && (n.includes(nr) || nr.includes(n) ? 22 : 0)); };
+    const scoreItem = (x, group) => {
+      const title = x.title || (group && group.title) || '';
+      const a = names(x['artist-credit']) || names(group && group['artist-credit']) || artist;
+      const ts = titleScore(title), as = artistScore(a);
+      if (ts < 50 || as === 0) return 0;
+      let s = ts + as;
+      const y = +(String(x.date || '').slice(0, 4)) || +(String(group && group['first-release-date'] || '').slice(0, 4)) || 0;
+      if (year && y) { const delta = Math.abs(y - year); s += delta === 0 ? 20 : delta <= 2 ? 14 : delta <= 6 ? 7 : 0; }
+      const count = +(x['medium-track-count'] || (x.media || []).reduce((n, m) => n + (m['track-count'] || (m.tracks || []).length), 0)) || 0;
+      if (trackCount && count) s += count === trackCount ? 16 : Math.abs(count - trackCount) <= 2 ? 8 : 0;
+      if (x.status === 'Official') s += 8;
+      return s;
+    };
+    try {
+      const releaseQuery = encodeURIComponent('release:"' + safeTerm(album) + '" AND artist:"' + safeTerm(artist) + '"');
+      const rr = await queued(() => fetch('https://musicbrainz.org/ws/2/release/?query=' + releaseQuery + '&limit=25&fmt=json', { headers: UA }));
+      if (!rr.ok) return null;
+      const direct = (await rr.json()).releases || [];
+      const groupQuery = encodeURIComponent('releasegroup:"' + safeTerm(album) + '" AND artist:"' + safeTerm(artist) + '"');
+      const gr = await queued(() => fetch('https://musicbrainz.org/ws/2/release-group/?query=' + groupQuery + '&limit=5&fmt=json', { headers: UA }));
+      if (!gr.ok) return null;
+      const groupResults = (await gr.json())['release-groups'] || [];
+      const bestGroup = groupResults.map((g) => ({ g, score: scoreItem(g, g) })).sort((a, b) => b.score - a.score)[0];
+      let groupData = null, grouped = [];
+      if (bestGroup && bestGroup.score >= 50 && bestGroup.g.id) {
+        const gd = await queued(() => fetch('https://musicbrainz.org/ws/2/release-group/' + bestGroup.g.id + '?inc=releases+genres&fmt=json', { headers: UA }));
+        if (gd.ok) {
+          groupData = await gd.json();
+          grouped = (groupData.releases || []).map((x) => ({ ...x, _group: groupData }));
+        }
+      }
+      const unique = new Map();
+      [...direct, ...grouped].forEach((x) => {
+        if (!x.id) return;
+        const group = x._group || (x['release-group'] && x['release-group'].id === (groupData && groupData.id) ? groupData : null);
+        const score = scoreItem(x, group);
+        if (score < 50) return;
+        const li = (x['label-info'] || [])[0] || {};
+        const candidate = {
+          id: x.id, title: x.title || (group && group.title) || album,
+          artist: names(x['artist-credit']) || names(group && group['artist-credit']) || artist,
+          date: x.date || '', country: x.country || '', status: x.status || '',
+          label: (li.label || {}).name || '', catalog: li['catalog-number'] || '',
+          format: [...new Set((x.media || []).map((m) => m.format).filter(Boolean))].join(', '),
+          trackCount: +(x['medium-track-count'] || (x.media || []).reduce((n, m) => n + (m['track-count'] || (m.tracks || []).length), 0)) || 0,
+          firstReleaseDate: (group && group['first-release-date']) || '', releaseGroup: (group && group.title) || '',
+          releaseType: group ? [group['primary-type'], ...(group['secondary-types'] || [])].filter(Boolean).join(' · ') : '',
+          genres: group ? (group.genres || []).map((v) => v.name).filter(Boolean).slice(0, 5) : [], score
+        };
+        const old = unique.get(x.id);
+        if (!old || candidate.score > old.score) unique.set(x.id, candidate);
+      });
+      const items = [...unique.values()].sort((a, b) => b.score - a.score || (a.date || '').localeCompare(b.date || '')).slice(0, 16);
+      if (items.length) writeJ(cacheFile, { t: Date.now(), items });
+      return items;
     } catch { return null; }
   });
   // ---------- correção de informações do álbum, faixas bônus

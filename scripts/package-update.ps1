@@ -1,0 +1,43 @@
+param([string]$OutputDirectory)
+$ErrorActionPreference = 'Stop'
+$repo = Split-Path -Parent $PSScriptRoot
+$package = Get-Content -LiteralPath (Join-Path $repo 'package.json') -Raw | ConvertFrom-Json
+$version = $package.version
+if ($version -notmatch '^\d+\.\d+\.\d+$') { throw 'A versão do package.json precisa seguir o formato x.y.z.' }
+if (!$OutputDirectory) { $OutputDirectory = Join-Path $repo 'release' }
+New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
+$stage = Join-Path $env:TEMP ('cobre-update-' + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Force -Path $stage | Out-Null
+$appFiles = @('account-preload.js','account.html','cobre-id-client.js','cobre-id-main.js','features-main.js','features.js','icon.ico','icon.png','index.html','main.js','mini-preload.js','mini.html','package.json','preload.js','remote.html','renderer.js','update-main.js')
+$paths = [System.Collections.Generic.List[string]]::new()
+try {
+  foreach ($name in $appFiles) {
+    $from = Join-Path $repo $name
+    if (!(Test-Path -LiteralPath $from -PathType Leaf)) { throw "Falta o arquivo do app: $name" }
+    Copy-Item -LiteralPath $from -Destination (Join-Path $stage $name) -Force
+    $paths.Add($name)
+  }
+
+  $runtime = Join-Path $stage '.runtime'
+  New-Item -ItemType Directory -Force -Path $runtime | Out-Null
+  $runtimePackage = [ordered]@{ name=$package.name; version=$version; private=$true; dependencies=$package.dependencies }
+  $runtimePackage | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $runtime 'package.json') -Encoding UTF8
+  Copy-Item -LiteralPath (Join-Path $repo 'package-lock.json') -Destination (Join-Path $runtime 'package-lock.json') -Force
+  & npm ci --prefix $runtime --omit=dev --ignore-scripts --no-audit --no-fund
+  if ($LASTEXITCODE -ne 0) { throw 'Não consegui preparar as dependências de produção do pacote.' }
+  Move-Item -LiteralPath (Join-Path $runtime 'node_modules') -Destination (Join-Path $stage 'node_modules') -Force
+  Remove-Item -LiteralPath $runtime -Recurse -Force
+  Get-ChildItem -LiteralPath (Join-Path $stage 'node_modules') -File -Recurse | ForEach-Object {
+    $paths.Add($_.FullName.Substring($stage.Length + 1).Replace('\','/'))
+  }
+
+  $manifest = [ordered]@{ version=$version; files=@($paths | Sort-Object -Unique) }
+  $manifestJson = $manifest | ConvertTo-Json -Depth 5
+  [IO.File]::WriteAllText((Join-Path $stage 'cobre-update.json'), $manifestJson, [System.Text.UTF8Encoding]::new($false))
+  $archive = Join-Path $OutputDirectory "Cobre-Update-v$version-x64.zip"
+  if (Test-Path -LiteralPath $archive) { Remove-Item -LiteralPath $archive -Force }
+  Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $archive -CompressionLevel Optimal
+  Get-Item -LiteralPath $archive | Select-Object FullName,Length
+} finally {
+  if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force }
+}

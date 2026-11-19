@@ -184,7 +184,7 @@ let lines = [], synced = false, li = -1, tab = 'lib', gs = [];
 let mode = localStorage.mode || 'albums', scope = { artist: null, album: null }, net = localStorage.net !== '0';
 const cur = () => q[pos];
 let revs = {}, rvTimer, rvOpen = false;
-const VERSION = '3.2';
+const VERSION = '3.5';
 const rk = (g) => g.artist + '|' + g.album;
 const saveRevs = () => api.revSave(revs);
 const starsHtml = (n) => [1, 2, 3, 4, 5].map((i) => `<span data-s="${i}" class="${i <= n ? 'on' : ''}">★</span>`).join('');
@@ -280,7 +280,7 @@ function show() {
   $('#queue').hidden = tab !== 'q';
   $('#lyr').hidden = tab !== 'lyr';
   $('#bk').hidden = tab !== 'lib' || !(scope.album || scope.artist || scope.genre || scope.pl);
-  $('#sw').style.visibility = $('#vsel').style.visibility = $('#sort').style.visibility = $('#dice').style.visibility = tab === 'lib' ? 'visible' : 'hidden';
+  $('#library-tools').hidden = tab !== 'lib';
   [['lib', '#t-lib'], ['q', '#t-q'], ['lyr', '#t-lyr']].forEach(([n, id]) => $(id).classList.toggle('on', tab === n));
   $('#vsel').value = mode;
   $('#rank').hidden = !(tab === 'lib' && mode === 'artists' && scope.artist && !scope.album);
@@ -411,6 +411,7 @@ audio.ontimeupdate = () => {
 $('#seek').oninput = () => { seeking = true; fill($('#seek')); };
 $('#seek').onchange = () => { if (audio.duration) audio.currentTime = $('#seek').value / 1000 * audio.duration; seeking = false; };
 $('#vol').oninput = (e) => { master.gain.value = e.target.value / 100; localStorage.vol = e.target.value; fill(e.target); };
+api.ipc.on('miniVolume', (value) => { $('#vol').value = value; master.gain.value = value / 100; localStorage.vol = value; fill($('#vol')); });
 $('#out').onchange = async (e) => { try { await ctx.setSinkId(e.target.value); localStorage.dev = e.target.value; } catch {} };
 const pickFolder = async () => { const d = await api.pick(); if (d) load(d); };
 $('#pick').onclick = (e) => openPop(e.currentTarget, folderHtml());
@@ -518,16 +519,36 @@ function setAccent(c) {
 }
 function gearHtml() {
   const z = Math.round((+localStorage.zoom || 1) * 100), a = localStorage.accent || ACC[0][1];
-  return `<p class="ph">Configurações</p><div class="pr"><button class="lnk" data-act="account">Conta Cobre…</button></div><p class="mu">Tamanho da interface <span id="zv">${z}%</span></p><input type="range" id="zs" min="80" max="140" step="5" value="${z}">` +
-    `<p class="mu">Cor de destaque</p><div class="pr">${ACC.map(([n, c]) => { const [x, y = x] = c.split('|'); return `<button class="swt${c === a ? ' on' : ''}" data-acc="${c}" title="${n}" style="background:${c === 'dyn' ? 'conic-gradient(#e8604c,#f6b45c,#5fd6e0,#8a63d2,#e8604c)' : `linear-gradient(135deg,${x},${y})`}"></button>`; }).join('')}</div>` +
-    `<label class="net"><input type="checkbox" id="netc"${net ? ' checked' : ''}> Buscar capas e fotos ausentes online</label><label class="net"><input type="checkbox" id="phc"${phOn ? ' checked' : ''}> Foto do artista na aba Artistas</label><label class="net"><input type="checkbox" id="netl"${netL ? ' checked' : ''}> Buscar letras automaticamente</label><label class="net"><input type="checkbox" id="hrc"${hrOn ? ' checked' : ''}> Selo Hi-Res nas faixas</label><label class="net"><input type="checkbox" id="bgc"${localStorage.bg !== '0' ? ' checked' : ''}> Continuar tocando ao fechar a janela</label><p class="mu">Letras</p><div class="pr"><select id="lyst">${opts([['', 'Padrão'], ['hc', 'Alto contraste'], ['ac', 'Cor de destaque']], localStorage.lyst || '')}</select><select id="lysz">${opts([['', 'Tamanho normal'], ['l', 'Grande'], ['xl', 'Enorme']], localStorage.lysz || '')}</select></div>` +
-    `<div class="pr"><button class="lnk" data-act="rescan">Reanalisar biblioteca</button><button class="lnk" data-act="unhide">Restaurar removidos</button><button class="lnk" data-act="health">Saúde do Cobre</button><button class="lnk" data-act="covers">Verificar capas</button><button class="lnk" data-act="about">Sobre e licença</button><button class="lnk" data-act="dev">Diagnóstico</button></div><p class="mu">Versão ${VERSION} · © 2026 Bruno C S Moraes</p>`;
+  const accents = ACC.map(([n, c]) => {
+    const [x, y = x] = c.split('|');
+    const bg = c === 'dyn' ? 'conic-gradient(#e8604c,#f6b45c,#5fd6e0,#8a63d2,#e8604c)' : 'linear-gradient(135deg,' + x + ',' + y + ')';
+    return '<button class="swt' + (c === a ? ' on' : '') + '" data-acc="' + c + '" title="' + n + '" style="background:' + bg + '"></button>';
+  }).join('');
+  return '<p class="ph">Configurações</p>' +
+    '<p class="settings-section">Conta</p><div class="pr"><button class="lnk" data-act="account">Conta Cobre…</button></div>' +
+    '<p class="settings-section">Aparência</p><p class="mu">Tamanho da interface <span id="zv">' + z + '%</span></p><input type="range" id="zs" min="80" max="140" step="5" value="' + z + '">' +
+    '<p class="mu">Visualização da capa</p><select id="vzsel">' + opts(VZ.map((k) => [k, VN[k]]), vz) + '</select>' +
+    '<p class="mu">Cor de destaque</p><div class="pr">' + accents + '</div>' +
+    '<p class="settings-section">Biblioteca</p><label class="net"><input type="checkbox" id="netc"' + (net ? ' checked' : '') + '> Buscar capas e fotos ausentes online</label>' +
+    '<label class="net"><input type="checkbox" id="phc"' + (phOn ? ' checked' : '') + '> Foto do artista na aba Artistas</label>' +
+    '<label class="net"><input type="checkbox" id="hrc"' + (hrOn ? ' checked' : '') + '> Selo Hi-Res nas faixas</label>' +
+    '<p class="settings-section">Letras</p><label class="net"><input type="checkbox" id="netl"' + (netL ? ' checked' : '') + '> Buscar letras automaticamente</label>' +
+    '<div class="pr"><select id="lyst">' + opts([['', 'Padrão'], ['hc', 'Alto contraste'], ['ac', 'Cor de destaque']], localStorage.lyst || '') + '</select>' +
+    '<select id="lysz">' + opts([['', 'Tamanho normal'], ['l', 'Grande'], ['xl', 'Enorme']], localStorage.lysz || '') + '</select></div>' +
+    '<p class="settings-section">Aplicativo</p><label class="net"><input type="checkbox" id="bgc"' + (localStorage.bg !== '0' ? ' checked' : '') + '> Continuar tocando ao fechar a janela</label>' +
+    '<p class="settings-section">Manutenção</p><div class="pr"><button class="lnk" data-act="rescan">Reanalisar biblioteca</button><button class="lnk" data-act="unhide">Restaurar removidos</button><button class="lnk" data-act="health">Saúde do Cobre</button><button class="lnk" data-act="covers">Verificar capas</button><button class="lnk" data-act="updates">Atualizar Cobre…</button><button class="lnk" data-act="about">Sobre e licença</button><button class="lnk" data-act="dev">Diagnóstico</button></div>' +
+    '<p class="mu">Versão ' + VERSION + ' · © 2026 Bruno C S Moraes</p>';
 }
 const zoom = (el) => { if (!el.style.backgroundImage) return; $('#big').style.backgroundImage = el.style.backgroundImage; $('#big').hidden = false; };
 $('#outb').onclick = (e) => openPop(e.currentTarget, outHtml());
 $('#gear').onclick = (e) => openPop(e.currentTarget, gearHtml());
 $('#fxb').onclick = (e) => openPop(e.currentTarget, fxHtml(), 'wide');
-$('#sbt').onclick = () => { $('#sw').classList.add('open'); $('#q').focus(); };
+$('#sbt').onclick = () => {
+  const sw = $('#sw'), q = $('#q');
+  if (!sw.classList.contains('open')) { sw.classList.add('open'); q.focus(); }
+  else if (!q.value) sw.classList.remove('open');
+  else q.focus();
+};
 $('#q').onblur = () => { if (!$('#q').value) $('#sw').classList.remove('open'); };
 $('#cover').onclick = () => zoom($('#cover'));
 $('#big').onclick = () => { $('#big').hidden = true; };
@@ -561,7 +582,8 @@ $('#pop').oninput = (e) => {
 };
 $('#pop').onchange = (e) => {
   const t = e.target, K = { ftr: 'tr', fcf: 'cf', fhp: 'hp', flp: 'lp', frate: 'rate', fcrk: 'crk', fvu: 'vu' };
-  if (t.id === 'netc') { net = t.checked; localStorage.net = net ? '1' : '0'; covs.clear(); phs.clear(); }
+  if (t.id === 'vzsel') setViz(t.value);
+  else if (t.id === 'netc') { net = t.checked; localStorage.net = net ? '1' : '0'; covs.clear(); phs.clear(); }
   else if (t.id === 'hrc') { hrOn = t.checked; localStorage.hr = hrOn ? '1' : '0'; render(); }
   else if (t.id === 'bgc') { localStorage.bg = t.checked ? '1' : '0'; api.setBg(t.checked); }
   else if (t.id === 'lyst' || t.id === 'lysz') { localStorage[t.id] = t.value; applyLy(); }
@@ -1262,3 +1284,6 @@ api.revLoad().then((x) => { revs = x || {}; render(); });
 render();
 devices();
 if (localStorage.dir) load(localStorage.dir);
+
+
+
