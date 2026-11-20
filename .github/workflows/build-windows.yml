@@ -24,7 +24,18 @@ jobs:
       - name: Audit dependencies
         run: npm audit --audit-level=moderate
       - name: Build Windows installer and portable package
-        run: npm run dist
+        shell: pwsh
+        run: |
+          $logPath = Join-Path $env:RUNNER_TEMP 'cobre-desktop-dist.log'
+          npm run dist 2>&1 | Tee-Object -FilePath $logPath
+          $buildExit = $LASTEXITCODE
+          if ($buildExit -ne 0) {
+            $message = (Get-Content -LiteralPath $logPath -Tail 40) -join "`n"
+            $message = $message -replace [regex]::Escape($env:GITHUB_WORKSPACE), '<workspace>'
+            $message = $message.Replace('%', '%25').Replace("`r", '%0D').Replace("`n", '%0A')
+            Write-Output "::error title=Desktop packaging log tail::$message"
+            exit $buildExit
+          }
       - name: Build in-app update package
         shell: pwsh
         run: ./scripts/package-update.ps1
