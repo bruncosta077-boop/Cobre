@@ -1,5 +1,7 @@
 // Cobre 3.0 (processo principal): capas melhores, descobrir, Last.fm, IA, mini player, acesso remoto
 const http = require('http'), os = require('os');
+const { pipeline } = require('stream');
+const parseByteRange = require('./byte-range');
 module.exports = function (X) {
   const { app, ipcMain, BrowserWindow, dialog, clipboard, nativeImage, screen, path, fs, crypto, mm, pathToFileURL, getWin, H } = X;
   const { curCover, ckey, customOf, clearCustom, CDIR, UA, queued, wait, LIB } = H;
@@ -262,12 +264,22 @@ module.exports = function (X) {
       if (!b) { res.writeHead(404); return res.end(); }
       res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'max-age=86400' }); return res.end(b);
     }
-    const size = fs.statSync(t.path).size, type = MIME[path.extname(t.path).toLowerCase()] || 'application/octet-stream', rg = req.headers.range;
-    if (rg) {
-      const [s, e] = rg.replace('bytes=', '').split('-'), start = +s || 0, end = e ? Math.min(+e, size - 1) : size - 1;
-      res.writeHead(206, { 'Content-Range': `bytes ${start}-${end}/${size}`, 'Accept-Ranges': 'bytes', 'Content-Length': end - start + 1, 'Content-Type': type });
-      fs.createReadStream(t.path, { start, end }).pipe(res);
-    } else { res.writeHead(200, { 'Accept-Ranges': 'bytes', 'Content-Length': size, 'Content-Type': type }); fs.createReadStream(t.path).pipe(res); }
+    if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405, { Allow: 'GET, HEAD' }); return res.end(); }
+    let size;
+    try { size = fs.statSync(t.path).size; } catch { res.writeHead(404); return res.end(); }
+    const range = parseByteRange(req.headers.range, size);
+    if (!range) { res.writeHead(416, { 'Content-Range': `bytes */${size}`, 'Accept-Ranges': 'bytes' }); return res.end(); }
+    const type = MIME[path.extname(t.path).toLowerCase()] || 'application/octet-stream';
+    const headers = { 'Accept-Ranges': 'bytes', 'Content-Length': range.length, 'Content-Type': type, 'Cache-Control': 'no-store' };
+    if (range.partial) headers['Content-Range'] = `bytes ${range.start}-${range.end}/${size}`;
+    res.writeHead(range.partial ? 206 : 200, headers);
+    if (req.method === 'HEAD' || range.length === 0) return res.end();
+    pipeline(fs.createReadStream(t.path, { start: range.start, end: range.end }), res, (error) => {
+      if (error && !res.destroyed) {
+        if (res.headersSent) res.destroy(error);
+        else { res.writeHead(500); res.end(); }
+      }
+    });
   }
   function startRemote() {
     if (srv) return;

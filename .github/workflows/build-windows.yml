@@ -52,9 +52,9 @@ jobs:
         with:
           name: Cobre-Desktop-Windows-x64
           path: |
-            release/Cobre-3.7.0-x64.exe
-            release/Cobre-3.7.0-x64.zip
-            release/Cobre-Update-v3.7.0-x64.zip
+            release/Cobre-*-x64.exe
+            release/Cobre-[0-9]*-x64.zip
+            release/Cobre-Update-v*-x64.zip
             release/checksums-sha256.txt
           if-no-files-found: error
           retention-days: 30
@@ -86,7 +86,7 @@ jobs:
             Consulte `CHANGELOG.md` no repositório para as notas completas.
           prerelease: false
           files: |
-            release/Cobre-3.7.0-x64.exe
-            release/Cobre-3.7.0-x64.zip
-            release/Cobre-Update-v3.7.0-x64.zip
+            release/Cobre-*-x64.exe
+            release/Cobre-[0-9]*-x64.zip
+            release/Cobre-Update-v*-x64.zip
             release/checksums-sha256.txt

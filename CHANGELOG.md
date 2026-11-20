@@ -1,5 +1,13 @@
 # Histórico de versões — Cobre Desktop
 
+## 3.8.0 — transmissão local mais robusta
+
+- O acesso remoto agora trata corretamente faixas de bytes, incluindo pedidos parciais, sufixos, intervalos abertos e posições inválidas. Isso melhora seek e retomada ao transmitir áudio para o Mobile.
+- Adicionado suporte a `HEAD`, respostas HTTP `416` para intervalos inválidos e encerramento correto do fluxo quando a conexão cai.
+- Mantidos os controles de segurança existentes: endereço local com chave, HTTP privado e sem redirecionar a chave para outro host.
+- Corrigido o pacote de atualização interno para incluir o novo módulo de faixa de bytes.
+- Inclui [@dilucas00](https://github.com/dilucas00).
+
 ## 3.7.0 — preferências recuperáveis
 
 - Corrige a migração das configurações salvas antes da troca para o protocolo seguro `cobre://app`.
