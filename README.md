@@ -46,7 +46,7 @@ Acesse **Configurações → Manutenção → Atualizar Cobre**. O app consulta 
 
 - [Cobre Mobile](https://github.com/bruncosta077-boop/Cobre-Mobile) — cliente Android em pré-release de desenvolvimento; conexão LAN e reprodução básica já existem, enquanto recursos Mobile e assinatura estável continuam em evolução.
 - [Cobre Server](https://github.com/bruncosta077-boop/Cobre-Server) — serviço Cobre ID para contas, sessões, dispositivos e pareamento inicial.
-- Cobre TV — protótipo 0.1.0 em desenvolvimento separado; ainda não pareia, lê a biblioteca do Desktop ou reproduz faixas reais.
+- [Cobre TV](https://github.com/bruncosta077-boop/Cobre-TV) — protótipo 0.1.0 em desenvolvimento separado; ainda não pareia, lê a biblioteca do Desktop ou reproduz faixas reais.
 
 O streaming integrado entre Desktop, Mobile e TV e a sincronização da biblioteca ainda não estão disponíveis. A presença de dispositivos e a conta Cobre ID, por si só, não dão acesso à música do computador em outros aparelhos.
 
