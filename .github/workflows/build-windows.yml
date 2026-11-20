@@ -1,0 +1,80 @@
+name: Build and release Cobre Desktop for Windows
+
+on:
+  push:
+    branches: [main]
+    tags: ['cobre-desktop-v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Configure Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Audit dependencies
+        run: npm audit --audit-level=moderate
+      - name: Build Windows installer and portable package
+        run: npm run dist
+      - name: Build in-app update package
+        shell: pwsh
+        run: ./scripts/package-update.ps1
+      - name: Write SHA-256 checksums
+        shell: pwsh
+        run: |
+          Get-ChildItem release -File | Where-Object { $_.Name -match '^Cobre-(3\.6\.0-x64\.exe|3\.6\.0-x64\.zip|Update-v3\.6\.0-x64\.zip)$' } | ForEach-Object {
+            $hash = Get-FileHash $_.FullName -Algorithm SHA256
+            "$($hash.Hash.ToLower())  $($_.Name)"
+          } | Set-Content release/checksums-sha256.txt
+      - name: Upload release packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: Cobre-Desktop-Windows-x64
+          path: |
+            release/Cobre-3.6.0-x64.exe
+            release/Cobre-3.6.0-x64.zip
+            release/Cobre-Update-v3.6.0-x64.zip
+            release/checksums-sha256.txt
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/cobre-desktop-v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - name: Download verified Windows packages
+        uses: actions/download-artifact@v4
+        with:
+          name: Cobre-Desktop-Windows-x64
+          path: release
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Cobre Desktop ${{ github.ref_name }}
+          body: |
+            Atualização do Cobre Desktop para Windows x64.
+
+            Inclui instalador, ZIP portátil, pacote de atualização dentro do app e `checksums-sha256.txt`. A atualização automática valida SHA-256, substitui os arquivos corretos conforme o formato da instalação e mantém backup para recuperação.
+
+            Instalações 3.5.0 devem receber esta versão uma vez pelo instalador ou ZIP, pois o atualizador antigo não reconhece o novo formato. As próximas versões poderão ser aplicadas dentro do app.
+
+            Consulte `CHANGELOG.md` no repositório para as notas completas.
+          prerelease: false
+          files: |
+            release/Cobre-3.6.0-x64.exe
+            release/Cobre-3.6.0-x64.zip
+            release/Cobre-Update-v3.6.0-x64.zip
+            release/checksums-sha256.txt

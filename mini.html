@@ -42,21 +42,4 @@ svg.st{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;strok
 <div class="vr"><button id="vb" aria-label="Mostrar volume" title="Volume"><svg class="st" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4zM15.5 8.5a5 5 0 0 1 0 7M18 5.5a9 9 0 0 1 0 13"/></svg></button><div id="vp" hidden><input type="range" id="vl" min="0" max="100" value="80" aria-label="Volume"></div></div>
 <div class="k"><button id="pv" aria-label="Anterior"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9.5 12z"/></svg></button><button id="t" aria-label="Tocar ou pausar"></button><button id="nx" aria-label="Próxima"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5v14l10.5-7z"/></svg></button></div>
 <div id="resize" title="Arraste para redimensionar" aria-label="Redimensionar mini player"></div>
-<script>
-const $ = (s) => document.querySelector(s);
-const PLAY = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>', PAUSE = '<svg viewBox="0 0 24 24"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>';
-$('#t').innerHTML = PLAY;
-mini.onState((s) => {
-  $('#ti').textContent = s.title; $('#ar').textContent = s.artist;
-  $('#c').style.backgroundImage = s.cover ? `url("${s.cover}")` : '';
-  $('#t').innerHTML = s.playing ? PAUSE : PLAY;
-  $('#p div').style.width = (s.dur ? s.pos / s.dur * 100 : 0) + '%';
-  $('#vl').value = Math.round(s.volume ?? 80);
-  if (s.acc) { document.documentElement.style.setProperty('--cu', s.acc); document.documentElement.style.setProperty('--cu2', s.acc2 || s.acc); }
-});
-$('#pv').onclick = () => mini.cmd('prev'); $('#t').onclick = () => mini.cmd('toggle'); $('#nx').onclick = () => mini.cmd('next');
-$('#op').onclick = () => mini.show(); $('#x').onclick = () => mini.close();
-$('#vb').onclick = () => { $('#vp').hidden = !$('#vp').hidden; $('#vb').setAttribute('aria-label', $('#vp').hidden ? 'Mostrar volume' : 'Ocultar volume'); };
-$('#vl').oninput = (e) => mini.volume(+e.target.value);
-$('#resize').onpointerdown = (e) => { e.preventDefault(); const sx=e.screenX, sy=e.screenY, w=innerWidth, h=innerHeight; $('#resize').setPointerCapture(e.pointerId); const move=(m)=>mini.resize(w+m.screenX-sx,h+m.screenY-sy); const done=()=>{ $('#resize').removeEventListener('pointermove',move); $('#resize').removeEventListener('pointerup',done); }; $('#resize').addEventListener('pointermove',move); $('#resize').addEventListener('pointerup',done); };
-</script></body></html>
+<script src="mini-renderer.js"></script></body></html>

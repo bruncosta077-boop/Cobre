@@ -68,10 +68,13 @@ function open() {
   win = new ctx.BrowserWindow({
     width: 440, height: 660, minWidth: 380, minHeight: 520, autoHideMenuBar: true, title: 'Conta Cobre',
     backgroundColor: '#121110', icon: path.join(__dirname, 'icon.ico'), center: true,
-    webPreferences: { preload: path.join(__dirname, 'account-preload.js'), contextIsolation: true, nodeIntegration: false },
+    webPreferences: { preload: path.join(__dirname, 'account-preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true, webSecurity: true },
   });
   win.removeMenu();
-  win.loadFile('account.html');
+  win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  win.webContents.on('will-navigate', (event, url) => { try { const target = new URL(url); if (target.protocol !== 'cobre:' || target.hostname !== 'app' || target.pathname !== '/account.html') event.preventDefault(); } catch { event.preventDefault(); } });
+  win.webContents.on('will-redirect', (event, url) => { try { const target = new URL(url); if (target.protocol !== 'cobre:' || target.hostname !== 'app' || target.pathname !== '/account.html') event.preventDefault(); } catch { event.preventDefault(); } });
+  win.loadURL('cobre://app/account.html');
   win.on('closed', () => { win = null; });
 }
 

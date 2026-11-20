@@ -1,6 +1,5 @@
 // Cobre 3.0 (processo principal): capas melhores, descobrir, Last.fm, IA, mini player, acesso remoto
 const http = require('http'), os = require('os');
-const { fileURLToPath } = require('url');
 module.exports = function (X) {
   const { app, ipcMain, BrowserWindow, dialog, clipboard, nativeImage, screen, path, fs, crypto, mm, pathToFileURL, getWin, H } = X;
   const { curCover, ckey, customOf, clearCustom, CDIR, UA, queued, wait, LIB } = H;
@@ -91,7 +90,7 @@ module.exports = function (X) {
   });
   ipcMain.handle('coverBlob', async (_e, p, a, al) => { const c = await curCover(p, a, al); return c.img && !c.img.isEmpty() ? c.img.resize({ width: 1000 }).toJPEG(92) : null; });
   ipcMain.handle('coverVideo', (_e, p) => {
-    try { const d = path.dirname(p), f = fs.readdirSync(d).find((n) => /^(cover|canvas)\.(mp4|webm|m4v|mov)$/i.test(n)); return f ? pathToFileURL(path.join(d, f)).href : null; } catch { return null; }
+    try { const d = path.dirname(p), f = fs.readdirSync(d).find((n) => /^(cover|canvas)\.(mp4|webm|m4v|mov)$/i.test(n)); return f ? H.mediaUrl(path.join(d, f)) : null; } catch { return null; }
   });
 
   // ---------- compartilhar
@@ -212,16 +211,10 @@ module.exports = function (X) {
   ipcMain.handle('miniToggle', () => {
     if (mini && !mini.isDestroyed()) { mini.close(); return false; }
     const wa = screen.getPrimaryDisplay().workArea, W = 244, Hh = 320;
-    mini = new BrowserWindow({ width: W, height: Hh, minWidth: 220, minHeight: 270, maxWidth: 460, maxHeight: 620, x: wa.x + wa.width - W - 20, y: wa.y + wa.height - Hh - 20, frame: false, resizable: true, alwaysOnTop: true, skipTaskbar: true, backgroundColor: '#181614', title: 'Cobre', icon: path.join(__dirname, 'icon.ico'), webPreferences: { preload: path.join(__dirname, 'mini-preload.js'), nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: false, backgroundThrottling: false } });
-    const miniPage = path.resolve(__dirname, 'mini.html');
-    const blockMiniNavigation = (event, url) => {
-      try { if (path.resolve(fileURLToPath(url)) !== miniPage) event.preventDefault(); }
-      catch { event.preventDefault(); }
-    };
+    mini = new BrowserWindow({ width: W, height: Hh, minWidth: 220, minHeight: 270, maxWidth: 460, maxHeight: 620, x: wa.x + wa.width - W - 20, y: wa.y + wa.height - Hh - 20, frame: false, resizable: true, alwaysOnTop: true, skipTaskbar: true, backgroundColor: '#181614', title: 'Cobre', icon: path.join(__dirname, 'icon.ico'), webPreferences: { preload: path.join(__dirname, 'mini-preload.js'), nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true, backgroundThrottling: false } });
     mini.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
-    mini.webContents.on('will-navigate', blockMiniNavigation);
-    mini.webContents.on('will-redirect', blockMiniNavigation);
-    mini.removeMenu(); mini.loadFile('mini.html');
+    mini.webContents.on('will-navigate', (event, url) => { try { const target = new URL(url); if (target.protocol !== 'cobre:' || target.hostname !== 'app' || target.pathname !== '/mini.html') event.preventDefault(); } catch { event.preventDefault(); } });
+    mini.removeMenu(); mini.loadURL('cobre://app/mini.html');
     const w = getWin();
     if (w) { w.on('show', closeMini); w.on('restore', closeMini); }
     mini.on('closed', () => { if (w && !w.isDestroyed()) { w.removeListener('show', closeMini); w.removeListener('restore', closeMini); } mini = null; send('mini', false); });

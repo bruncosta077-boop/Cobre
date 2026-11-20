@@ -903,7 +903,7 @@ async function healthDlg() {
       row(true, `Chromium ${esc(h.chrome)} · Node ${esc(h.node)}`) +
       row(ctx.state !== 'closed', `Motor de áudio: ${ctx.state}, ${ctx.sampleRate} Hz, latência ${Math.round((ctx.baseLatency || 0) * 1000)} ms`) +
       row(lib.length > 0, `Biblioteca: ${lib.length} faixas em ${albums().length} álbuns`) +
-      row(true, 'A proteção do navegador interno (webSecurity) está desligada para o equalizador ler arquivos locais. O Cobre só abre os seus arquivos e os sites de capas, letras e fotos.'),
+      row(true, 'Proteção do navegador ativa; páginas locais usam protocolo seguro do Cobre, com navegação externa bloqueada e arquivos locais liberados por identificador temporário.'),
     buttons: [{ label: 'Fechar', v: true }]
   });
 }

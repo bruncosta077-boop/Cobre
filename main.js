@@ -1,21 +1,57 @@
-const { app, BrowserWindow, dialog, ipcMain, globalShortcut, shell, nativeImage, Tray, Menu, clipboard, screen, safeStorage } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, globalShortcut, shell, nativeImage, Tray, Menu, clipboard, screen, safeStorage, protocol, net } = require('electron');
 const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
-const { pathToFileURL, fileURLToPath } = require('url');
+const { pathToFileURL } = require('url');
 const mm = require('music-metadata');
 
 const EXT = new Set(['.mp3', '.flac', '.wav', '.ogg', '.m4a', '.aac', '.opus']);
+protocol.registerSchemesAsPrivileged([{ scheme: 'cobre', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, codeCache: true } }]);
 let win;
 
-function restrictWindowNavigation(window, page) {
-  const expected = path.resolve(__dirname, page);
-  const blockUnexpectedNavigation = (event, url) => {
+const mediaById = new Map();
+const mediaIdByPath = new Map();
+const APP_FILES = new Set(['index.html', 'renderer.js', 'features.js', 'mini.html', 'mini-renderer.js', 'account.html', 'account-renderer.js']);
+const mediaUrl = (file) => {
+  const absolute = path.resolve(file);
+  let id = mediaIdByPath.get(absolute);
+  if (!id) { id = crypto.randomUUID(); mediaIdByPath.set(absolute, id); mediaById.set(id, absolute); }
+  return `cobre://app/media/${id}`;
+};
+function resolveMediaUrl(value) {
+  try { const url = new URL(value); if (url.protocol !== 'cobre:' || url.hostname !== 'app') return null; return mediaById.get(url.pathname.split('/')[2]) || null; } catch { return null; }
+}
+function installAppProtocol() {
+  protocol.handle('cobre', async (request) => {
     try {
-      if (path.resolve(fileURLToPath(url)) !== expected) event.preventDefault();
-    } catch {
-      event.preventDefault();
+      const url = new URL(request.url);
+      if (url.hostname !== 'app' || url.username || url.password) return new Response('Not found', { status: 404 });
+      let file;
+      if (url.pathname.startsWith('/media/')) {
+        file = mediaById.get(url.pathname.slice('/media/'.length));
+        if (!file || !fs.existsSync(file)) return new Response('Not found', { status: 404 });
+        return net.fetch(pathToFileURL(file).href, { headers: request.headers });
+      }
+      const relative = decodeURIComponent(url.pathname.replace(/^\//, '') || 'index.html');
+      if (!APP_FILES.has(relative)) return new Response('Not found', { status: 404 });
+      file = path.join(__dirname, relative);
+      const response = await net.fetch(pathToFileURL(file).href);
+      const headers = new Headers(response.headers);
+      headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-src 'none'; frame-ancestors 'none'");
+      headers.set('X-Content-Type-Options', 'nosniff');
+      headers.set('Referrer-Policy', 'no-referrer');
+      return new Response(await response.arrayBuffer(), { status: response.status, headers });
+    } catch (error) {
+      console.error('cobre protocol:', error.message);
+      return new Response('Bad request', { status: 400 });
     }
+  });
+}
+
+function restrictWindowNavigation(window, page) {
+  const blockUnexpectedNavigation = (event, url) => {
+    try { const target = new URL(url); if (target.protocol !== 'cobre:' || target.hostname !== 'app' || target.pathname !== `/${page}`) event.preventDefault(); }
+    catch { event.preventDefault(); }
   };
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   window.webContents.on('will-navigate', blockUnexpectedNavigation);
@@ -35,7 +71,7 @@ function walk(dir, out = []) {
 
 async function readTrack(p) {
   const base = path.basename(p, path.extname(p));
-  const t = { path: p, url: pathToFileURL(p).href, title: base, artist: '', album: '', no: 0, dur: 0, fmt: path.extname(p).slice(1).toUpperCase(), hi: false, spec: '', year: 0, genre: '', sr: 0, bits: 0, hr: false, v: 3 };
+  const t = { path: p, url: mediaUrl(p), title: base, artist: '', album: '', no: 0, dur: 0, fmt: path.extname(p).slice(1).toUpperCase(), hi: false, spec: '', year: 0, genre: '', sr: 0, bits: 0, hr: false, v: 3 };
   try {
     const m = await mm.parseFile(p, { skipCovers: true });
     t.title = m.common.title || base;
@@ -67,7 +103,7 @@ function readCache(dir) {
   try { const c = JSON.parse(fs.readFileSync(LIB(), 'utf8')); return c.dir === dir ? c.tracks : []; } catch { return []; }
 }
 
-ipcMain.handle('cached', (_e, dir) => sortT(readCache(dir)));
+ipcMain.handle('cached', (_e, dir) => sortT(readCache(dir)).map((track) => ({ ...track, url: mediaUrl(track.path) })));
 
 ipcMain.handle('scan', async (_e, dir) => {
   const old = new Map(readCache(dir).map((t) => [t.path, t]));
@@ -86,7 +122,7 @@ ipcMain.handle('scan', async (_e, dir) => {
   }
   sortT(out);
   try { fs.writeFileSync(LIB(), JSON.stringify({ dir, tracks: out })); } catch {}
-  return { tracks: out, changed };
+  return { tracks: out.map((track) => ({ ...track, url: mediaUrl(track.path) })), changed };
 });
 
 const LDIR = () => path.join(app.getPath('userData'), 'lyrics');
@@ -149,19 +185,19 @@ function folderArt(dir) {
   let imgs = [];
   try { imgs = fs.readdirSync(dir).filter((n) => /\.(jpe?g|png|webp|gif)$/i.test(n)); } catch {}
   const best = imgs.find((n) => /^(cover|folder|front|capa|album|art)/i.test(n)) || (imgs.length === 1 ? imgs[0] : null);
-  return best ? pathToFileURL(path.join(dir, best)).href : null;
+  return best ? path.join(dir, best) : null;
 }
 
 ipcMain.handle('albumCover', async (_e, p, artist, album, net) => {
   try {
     const cu = customOf(ckey(p, artist, album));
-    if (cu) return pathToFileURL(cu).href + '?v=' + Math.round(fs.statSync(cu).mtimeMs);
+    if (cu) return mediaUrl(cu) + '?v=' + Math.round(fs.statSync(cu).mtimeMs);
     const fa = folderArt(path.dirname(p));
-    if (fa) return fa;
+    if (fa) return mediaUrl(fa);
     fs.mkdirSync(CDIR(), { recursive: true });
     const h = crypto.createHash('md5').update(`${artist}|${album}|${album ? '' : p}`).digest('hex');
     const f = path.join(CDIR(), h + '.jpg');
-    const ok = () => pathToFileURL(f).href;
+    const ok = () => mediaUrl(f);
     if (fs.existsSync(f)) return ok();
     try {
       const pic = (await mm.parseFile(p)).common.picture?.[0];
@@ -203,10 +239,10 @@ ipcMain.handle('artistPhoto', async (_e, name, net) => {
   try {
     fs.mkdirSync(ADIR(), { recursive: true });
     const f = path.join(ADIR(), crypto.createHash('md5').update(name.toLowerCase()).digest('hex') + '.jpg');
-    if (fs.existsSync(f)) return pathToFileURL(f).href;
+    if (fs.existsSync(f)) return mediaUrl(f);
     if (!net || fs.existsSync(f + '.none')) return null;
     const r = await dqueued(() => fromDeezer(name, f));
-    if (r) return pathToFileURL(f).href;
+    if (r) return mediaUrl(f);
     if (r === false) fs.writeFileSync(f + '.none', '');
   } catch {}
   return null;
@@ -230,7 +266,9 @@ function rgb2hsl(r, g, b) {
 }
 ipcMain.handle('palette', (_e, u) => {
   try {
-    const bm = nativeImage.createFromPath(fileURLToPath(u)).resize({ width: 24, height: 24 }).toBitmap();
+    const imagePath = resolveMediaUrl(u);
+    if (!imagePath) return null;
+    const bm = nativeImage.createFromPath(imagePath).resize({ width: 24, height: 24 }).toBitmap();
     const bins = new Map();
     for (let i = 0; i + 3 < bm.length; i += 4) {
       const r = bm[i + 2], g = bm[i + 1], b = bm[i], mx = Math.max(r, g, b), mn = Math.min(r, g, b);
@@ -291,7 +329,7 @@ async function curCover(p, artist, album) {
   fs.mkdirSync(CDIR(), { recursive: true });
   const hash = ckey(p, artist, album);
   let file = customOf(hash) || null;
-  if (!file) { const fa = folderArt(path.dirname(p)); if (fa) { try { file = fileURLToPath(fa); } catch {} } }
+  if (!file) file = folderArt(path.dirname(p));
   if (!file && fs.existsSync(path.join(CDIR(), hash + '.jpg'))) file = path.join(CDIR(), hash + '.jpg');
   let img = file ? nativeImage.createFromPath(file) : null;
   if (!img || img.isEmpty()) {
@@ -367,6 +405,7 @@ ipcMain.on('quit', () => { quitting = true; app.quit(); });
 
 app.whenReady().then(() => {
   if (!app.hasSingleInstanceLock()) return;
+  installAppProtocol();
   win = new BrowserWindow({
     width: 1040, height: 700, minWidth: 760, minHeight: 520,
     backgroundColor: '#121110', autoHideMenuBar: true, title: 'Cobre', icon: path.join(__dirname, 'icon.ico'),
@@ -375,7 +414,7 @@ app.whenReady().then(() => {
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
-      webSecurity: false,
+      webSecurity: true,
       backgroundThrottling: false
     }
   });
@@ -396,7 +435,7 @@ app.whenReady().then(() => {
     tray.on('click', () => { if (win.isVisible()) win.hide(); else { win.show(); win.focus(); } });
   } catch {}
   win.on('close', (e) => { if (!quitting && bgOn) { e.preventDefault(); win.hide(); } });
-  win.loadFile('index.html');
+  win.loadURL('cobre://app/index.html');
   win.on('enter-full-screen', () => win.webContents.send('fs', true));
   win.on('leave-full-screen', () => win.webContents.send('fs', false));
   const keys = { MediaPlayPause: 'toggle', MediaNextTrack: 'next', MediaPreviousTrack: 'prev' };
@@ -407,7 +446,7 @@ app.on('will-quit', () => globalShortcut.unregisterAll());
 app.on('window-all-closed', () => app.quit());
 
 try {
-  require('./features-main')({ app, ipcMain, BrowserWindow, dialog, clipboard, nativeImage, screen, path, fs, crypto, mm, pathToFileURL, fileURLToPath, getWin: () => win, H: { curCover, ckey, customOf, clearCustom, CDIR, UA, queued, wait, LIB } });
+  require('./features-main')({ app, ipcMain, BrowserWindow, dialog, clipboard, nativeImage, screen, path, fs, crypto, mm, pathToFileURL, getWin: () => win, H: { curCover, ckey, customOf, clearCustom, CDIR, UA, queued, wait, LIB, mediaUrl } });
 } catch (e) { console.error('features-main', e); }
 try { require('./cobre-id-main').init({ app, ipcMain, BrowserWindow, safeStorage, version: app.getVersion() }); } catch (e) { console.error('cobre-id', e); }
 try { require('./update-main')({ app, ipcMain, getWin: () => win }); } catch (e) { console.error('cobre-updater', e); }

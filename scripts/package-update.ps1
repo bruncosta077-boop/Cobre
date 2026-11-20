@@ -8,7 +8,7 @@ if (!$OutputDirectory) { $OutputDirectory = Join-Path $repo 'release' }
 New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
 $stage = Join-Path $env:TEMP ('cobre-update-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Force -Path $stage | Out-Null
-$appFiles = @('account-preload.js','account.html','cobre-id-client.js','cobre-id-main.js','features-main.js','features.js','icon.ico','icon.png','index.html','main.js','mini-preload.js','mini.html','package.json','preload.js','remote.html','renderer.js','update-main.js')
+$appFiles = @('account-preload.js','account.html','account-renderer.js','cobre-id-client.js','cobre-id-main.js','features-main.js','features.js','icon.ico','icon.png','index.html','main.js','mini-preload.js','mini-renderer.js','mini.html','package.json','preload.js','remote.html','renderer.js','update-main.js')
 $paths = [System.Collections.Generic.List[string]]::new()
 try {
   foreach ($name in $appFiles) {
@@ -17,6 +17,10 @@ try {
     Copy-Item -LiteralPath $from -Destination (Join-Path $stage $name) -Force
     $paths.Add($name)
   }
+  $appAsar = Join-Path $repo 'release/win-unpacked/resources/app.asar'
+  if (!(Test-Path -LiteralPath $appAsar -PathType Leaf)) { throw 'Gere primeiro o instalador Windows para criar release/win-unpacked/resources/app.asar.' }
+  Copy-Item -LiteralPath $appAsar -Destination (Join-Path $stage 'app.asar') -Force
+  $paths.Add('app.asar')
 
   $runtime = Join-Path $stage '.runtime'
   New-Item -ItemType Directory -Force -Path $runtime | Out-Null
@@ -30,14 +34,14 @@ try {
   Get-ChildItem -LiteralPath (Join-Path $stage 'node_modules') -File -Recurse | ForEach-Object {
     $paths.Add($_.FullName.Substring($stage.Length + 1).Replace('\','/'))
   }
-
   $manifest = [ordered]@{ version=$version; files=@($paths | Sort-Object -Unique) }
-  $manifestJson = $manifest | ConvertTo-Json -Depth 5
-  [IO.File]::WriteAllText((Join-Path $stage 'cobre-update.json'), $manifestJson, [System.Text.UTF8Encoding]::new($false))
+  [IO.File]::WriteAllText((Join-Path $stage 'cobre-update.json'), ($manifest | ConvertTo-Json -Depth 5), [System.Text.UTF8Encoding]::new($false))
   $archive = Join-Path $OutputDirectory "Cobre-Update-v$version-x64.zip"
   if (Test-Path -LiteralPath $archive) { Remove-Item -LiteralPath $archive -Force }
   Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $archive -CompressionLevel Optimal
-  Get-Item -LiteralPath $archive | Select-Object FullName,Length
+  $item = Get-Item -LiteralPath $archive
+  if ($item.Length -gt 80MB) { throw 'O pacote de atualização excede o limite de 80 MiB.' }
+  $item | Select-Object FullName,Length
 } finally {
   if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force }
 }

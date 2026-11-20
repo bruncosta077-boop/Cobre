@@ -9,14 +9,16 @@ const OWNER = 'bruncosta077-boop', REPO = 'Cobre';
 const API = `https://api.github.com/repos/${OWNER}/${REPO}/releases/latest`;
 const ASSET = (v) => `Cobre-Update-v${v}-x64.zip`;
 const MAX_BYTES = 80 * 1024 * 1024;
-const ALLOWED = new Set(['account-preload.js','account.html','cobre-id-client.js','cobre-id-main.js','features-main.js','features.js','icon.ico','icon.png','index.html','main.js','mini-preload.js','mini.html','package.json','preload.js','remote.html','renderer.js','update-main.js']);
+const ALLOWED = new Set(['account-preload.js','account.html','account-renderer.js','app.asar','mini-renderer.js','cobre-id-client.js','cobre-id-main.js','features-main.js','features.js','icon.ico','icon.png','index.html','main.js','mini-preload.js','mini.html','package.json','preload.js','remote.html','renderer.js','update-main.js']);
 const semver = (v) => { const m = /^v?(\d+)\.(\d+)\.(\d+)$/.exec(String(v || '')); return m ? m.slice(1).map(Number) : null; };
 const newer = (a, b) => { for (let i=0;i<3;i++) { if (a[i] !== b[i]) return a[i] > b[i]; } return false; };
 const safeNotes = (s) => String(s || '').slice(0, 24000);
 
 module.exports = function initUpdater({ app, ipcMain, getWin }) {
   let ready = null, busy = false;
-  const supportsPatch = !__dirname.toLowerCase().endsWith('.asar');
+  const resourcesAsar = path.join(process.resourcesPath || '', 'app.asar');
+  const packagedAsar = !!app.isPackaged && fs.existsSync(resourcesAsar);
+  const supportsPatch = packagedAsar || !__dirname.toLowerCase().endsWith('.asar');
   const updatesDir = () => path.join(app.getPath('userData'), 'updates');
   const stateFile = () => path.join(app.getPath('userData'), 'update-installed.json');
   const send = (channel, data) => { const w=getWin(); if(w && !w.isDestroyed()) w.webContents.send(channel,data); };
@@ -41,7 +43,7 @@ module.exports = function initUpdater({ app, ipcMain, getWin }) {
     busy = true;
     try {
       const info = await releaseInfo();
-      if (!supportsPatch) throw new Error('A atualização direta está disponível apenas na edição portátil descompactada do Cobre.');
+      if (!supportsPatch) throw new Error('Não reconheci o formato desta instalação do Cobre.');
       if (!info.updateAvailable || info.version !== requestedVersion) throw new Error('A versão disponível mudou. Verifique as atualizações novamente.');
       if (!info.packageAvailable) throw new Error('A release ainda não tem o pacote portátil de atualização.');
       if (!info.asset.url.startsWith(`https://github.com/${OWNER}/${REPO}/releases/download/`)) throw new Error('O endereço do pacote não é confiável.');
@@ -64,13 +66,20 @@ module.exports = function initUpdater({ app, ipcMain, getWin }) {
       const manifestPath=path.join(stage,'cobre-update.json');
       if(!fs.existsSync(manifestPath)) throw new Error('O pacote não contém o manifesto de atualização.');
       const manifest=JSON.parse(fs.readFileSync(manifestPath,'utf8'));
-      if(manifest.version!==info.version || !Array.isArray(manifest.files) || !manifest.files.length || manifest.files.length>100) throw new Error('O manifesto do pacote não corresponde à versão publicada.');
+      if(manifest.version!==info.version || !Array.isArray(manifest.files) || !manifest.files.length || manifest.files.length>5000) throw new Error('O manifesto do pacote não corresponde à versão publicada.');
       const names=new Set();
       for(const name of manifest.files){ if(typeof name!=='string' || !validRelative(name) || names.has(name) || !fs.existsSync(path.join(stage,name))) throw new Error('O pacote lista arquivos inválidos.'); names.add(name); }
       const staged=walkFiles(stage).filter((x)=>x!=='cobre-update.json');
       if(staged.length!==names.size || staged.some((x)=>!names.has(x))) throw new Error('Os arquivos do pacote não correspondem ao manifesto.');
-      if(!names.has('package.json') || !names.has('renderer.js') || !names.has('main.js')) throw new Error('O pacote não contém os arquivos essenciais do Cobre.');
-      ready={version:info.version,notes:info.notes,stage,files:[...names],zipPath};
+      let installFiles, target;
+      if (packagedAsar) {
+        if (!names.has('app.asar')) throw new Error('O pacote da atualização não contém o aplicativo empacotado esperado.');
+        installFiles = ['app.asar']; target = process.resourcesPath;
+      } else {
+        if (!names.has('package.json') || !names.has('renderer.js') || !names.has('main.js')) throw new Error('O pacote não contém os arquivos essenciais do Cobre.');
+        installFiles = [...names].filter((name) => name !== 'app.asar'); target = __dirname;
+      }
+      ready={version:info.version,notes:info.notes,stage,files:installFiles,zipPath,target};
       send('cobreUpdateProgress',{percent:100,received:total,total:info.asset.size});
       return { ok:true, data:{version:ready.version,notes:ready.notes} };
     } catch(e) { ready=null; return {ok:false,error:e.message||'O download da atualização falhou.'}; }
@@ -80,7 +89,7 @@ module.exports = function initUpdater({ app, ipcMain, getWin }) {
   ipcMain.handle('cobreUpdateInstall', async () => {
     if(!ready) return {ok:false,error:'Baixe e verifique a atualização antes de instalar.'};
     try {
-      const target=__dirname, exe=process.execPath, dir=updatesDir();
+      const target=ready.target, exe=process.execPath, dir=updatesDir();
       const payload={version:ready.version,notes:ready.notes,target,stage:ready.stage,files:ready.files,state:stateFile(),exe,pid:process.pid};
       const argsPath=path.join(dir,'install.json'), scriptPath=path.join(dir,'install.ps1');
       fs.writeFileSync(argsPath,JSON.stringify(payload),{mode:0o600}); fs.writeFileSync(scriptPath,INSTALL_SCRIPT,'utf8');
@@ -118,7 +127,7 @@ const EXTRACT_SCRIPT = String.raw`
 param([string]$ZipPath,[string]$OutDir)
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-$allowed=@('account-preload.js','account.html','cobre-id-client.js','cobre-id-main.js','features-main.js','features.js','icon.ico','icon.png','index.html','main.js','mini-preload.js','mini.html','package.json','preload.js','remote.html','renderer.js','update-main.js','cobre-update.json')
+$allowed=@('account-preload.js','account.html','account-renderer.js','app.asar','mini-renderer.js','cobre-id-client.js','cobre-id-main.js','features-main.js','features.js','icon.ico','icon.png','index.html','main.js','mini-preload.js','mini.html','package.json','preload.js','remote.html','renderer.js','update-main.js','cobre-update.json')
 if(Test-Path -LiteralPath $OutDir){Remove-Item -LiteralPath $OutDir -Recurse -Force}; New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 $z=[IO.Compression.ZipFile]::OpenRead($ZipPath)
 try {
