@@ -47,7 +47,7 @@ Em **Configurações → Backup das configurações**, exporte ou restaure prefe
 ## Ecossistema Cobre
 
 - [Cobre Mobile](https://github.com/bruncosta077-boop/Cobre-Mobile) — último APK publicado 0.9.0 pré-release; código 0.11.0 em preparação, com backup Android seletivo. A chave estável de assinatura ainda não está configurada.
-- [Cobre Server](https://github.com/bruncosta077-boop/Cobre-Server) — versão 0.5.0-beta.3; contas, sessões, dispositivos, presença e pareamento Cobre ID.
+- [Cobre Server](https://github.com/bruncosta077-boop/Cobre-Server/releases/tag/v0.5.0-beta.5) — versão 0.5.0-beta.5; HTTPS opcional com certificado confiável, além de contas, sessões, dispositivos, presença e pareamento Cobre ID.
 - [Cobre TV](https://github.com/bruncosta077-boop/Cobre-TV) — protótipo 0.2.0 com pareamento Cobre ID; ainda não carrega biblioteca Desktop nem reproduz faixas reais.
 
 O Desktop pode transmitir áudio diretamente ao Mobile na mesma rede local; o Cobre Server não retransmite mídia. A TV ainda não reproduz áudio, e sincronização de bibliotecas/playlists entre aparelhos não está disponível.
