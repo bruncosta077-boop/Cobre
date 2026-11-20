@@ -42,13 +42,15 @@ Os pacotes são gerados na pasta `release/`.
 
 Acesse **Configurações → Manutenção → Atualizar Cobre**. O app consulta as releases do GitHub, mostra as notas, verifica o SHA-256 e atualiza instalações empacotadas em `app.asar` ou portáteis descompactadas, com cópia de segurança e tentativa de recuperação em falha. Instalações 3.5.0 precisam atualizar para 3.6.0 uma vez pelo instalador ou ZIP portátil; depois disso o atualizador interno passa a funcionar. As preferências da 3.5 também são migradas para o armazenamento seguro da 3.7.
 
+Em **Configurações → Backup das configurações**, exporte ou restaure preferências num arquivo JSON. O backup exclui senhas e tokens da conta. Atualizar por cima mantém os dados no perfil do Windows; desinstalar ou apagar os dados do usuário não é necessário para atualizações normais.
+
 ## Ecossistema Cobre
 
-- [Cobre Mobile](https://github.com/bruncosta077-boop/Cobre-Mobile) — cliente Android em pré-release de desenvolvimento; conexão LAN e reprodução básica já existem, enquanto recursos Mobile e assinatura estável continuam em evolução.
-- [Cobre Server](https://github.com/bruncosta077-boop/Cobre-Server) — serviço Cobre ID para contas, sessões, dispositivos e pareamento inicial.
-- [Cobre TV](https://github.com/bruncosta077-boop/Cobre-TV) — protótipo 0.1.0 em desenvolvimento separado; ainda não pareia, lê a biblioteca do Desktop ou reproduz faixas reais.
+- [Cobre Mobile](https://github.com/bruncosta077-boop/Cobre-Mobile) — último APK publicado 0.9.0 pré-release; código 0.11.0 em preparação, com backup Android seletivo. A chave estável de assinatura ainda não está configurada.
+- [Cobre Server](https://github.com/bruncosta077-boop/Cobre-Server) — versão 0.5.0-beta.3; contas, sessões, dispositivos, presença e pareamento Cobre ID.
+- [Cobre TV](https://github.com/bruncosta077-boop/Cobre-TV) — protótipo 0.2.0 com pareamento Cobre ID; ainda não carrega biblioteca Desktop nem reproduz faixas reais.
 
-O streaming integrado entre Desktop, Mobile e TV e a sincronização da biblioteca ainda não estão disponíveis. A presença de dispositivos e a conta Cobre ID, por si só, não dão acesso à música do computador em outros aparelhos.
+O Desktop pode transmitir áudio diretamente ao Mobile na mesma rede local; o Cobre Server não retransmite mídia. A TV ainda não reproduz áudio, e sincronização de bibliotecas/playlists entre aparelhos não está disponível.
 
 ## Segurança do acesso remoto
 
