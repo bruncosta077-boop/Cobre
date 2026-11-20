@@ -1,5 +1,14 @@
 # Histórico de versões — Cobre Desktop
 
+## 3.10.0 — pareamento seguro por QR
+
+- O painel Acesso remoto gera um QR curto com endereço local e identidade do Desktop, sem incluir senha, chave compartilhada ou token.
+- O Cobre Mobile lê o QR, solicita acesso pelo Cobre ID e guarda o endereço local somente depois da aprovação explícita no Desktop.
+- A biblioteca, as capas, o estado do player, os comandos e o áudio continuam usando as rotas autenticadas por cabeçalho `Authorization`; o Cobre Server não retransmite as músicas.
+- Ler o QR descobre o endereço local automaticamente; o QR expira em cinco minutos e pode ser renovado na tela. O endereço manual continua como alternativa se o scanner não estiver disponível.
+- O fluxo antigo de chave LAN permanece por compatibilidade com clientes anteriores; ele não é usado pelo novo pareamento Cobre ID.
+- Inclui [@dilucas00](https://github.com/dilucas00).
+
 ## 3.9.0 — base de acesso Cobre ID por aparelho
 
 - Conta Cobre mostra solicitações recebidas de Mobile/TV e permite aprovar ou recusar cada aparelho.

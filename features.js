@@ -547,12 +547,15 @@ async function aiDlg() {
 // ---------- acesso remoto
 async function remoteDlg() {
   const s = await api.ipc.invoke('remoteStatus');
+  let pairing = null, pairingError = '';
+  if (s.on) { try { pairing = await api.ipc.invoke('remotePairingQr'); } catch (e) { pairingError = e.message || 'Entre no Cobre ID para gerar o QR.'; } }
   const html = s.on
-    ? `<p style="color:var(--tx)">Ligado. Abra este endereço no celular ou no navegador da TV, na mesma rede Wi-Fi:</p><input id="rurl" readonly value="${esc(s.url)}"><p class="mu">Quem tiver o endereço completo (com a chave) consegue ouvir a sua biblioteca. A conexão não é criptografada: use só na sua rede, ou por uma VPN como o Tailscale para ouvir de fora. O Windows pode pedir permissão no firewall: permita em redes privadas. O PC precisa ficar ligado.</p>`
+    ? `<p style="color:var(--tx)">Aponte o Cobre Mobile para este QR na mesma rede Wi-Fi. Ele identifica este Desktop e inicia um pedido seguro pelo Cobre ID; aprove no computador.</p>${pairing ? `<div style="text-align:center;padding:8px"><img alt="QR de pareamento Cobre" src="${pairing.dataUrl}" style="width:220px;height:220px;background:white;padding:8px;border-radius:8px"><div class="mu" style="margin-top:6px">QR válido por 5 minutos · sem senha ou token</div></div>` : `<p class="mu">${esc(pairingError)}</p>`}<label class="mu">Endereço local para conexão direta</label><input id="rurl" readonly value="${esc(s.url)}"><p class="mu">O QR contém apenas o endereço local e a identidade deste Desktop. A chave de acesso é emitida pelo Cobre ID após sua aprovação e enviada no cabeçalho de autorização. A conexão de áudio continua restrita à rede local.</p>`
     : '<p style="color:var(--tx)">Liga um servidor no seu PC para você ouvir a biblioteca no celular ou na TV, pelo navegador, sem baixar as músicas.</p><p class="mu">Funciona em redes privadas. Arquivos ALAC (.m4a sem perdas) podem não tocar em alguns aparelhos.</p>';
   setTimeout(() => { if ($('#rurl')) $('#rurl').select(); }, 60);
-  const r = await dlg({ title: 'Acesso remoto', html, buttons: s.on ? [{ label: 'Fechar', v: false }, { label: 'Desligar', v: 'off', danger: true }] : [{ label: 'Agora não', v: false }, { label: 'Ligar', v: 'on' }] });
+  const r = await dlg({ title: 'Acesso remoto', html, buttons: s.on ? [{ label: 'Fechar', v: false }, ...(pairing ? [{ label: 'Novo QR', v: 'qr' }] : []), { label: 'Desligar', v: 'off', danger: true }] : [{ label: 'Agora não', v: false }, { label: 'Ligar', v: 'on' }] });
   if (r.v === 'on' || r.v === 'off') { await api.ipc.invoke('remoteSet', r.v === 'on'); if (r.v === 'on') remoteDlg(); else toast('Acesso remoto desligado'); }
+  else if (r.v === 'qr') remoteDlg();
 }
 
 // ---------- mini player, configurações e estado inicial

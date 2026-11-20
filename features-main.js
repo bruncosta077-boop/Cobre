@@ -1,5 +1,7 @@
 // Cobre 3.0 (processo principal): capas melhores, descobrir, Last.fm, IA, mini player, acesso remoto
 const http = require('http'), os = require('os');
+const QRCode = require('qrcode');
+const { createDesktopPairingUri } = require('./desktop-pairing-qr');
 const { pipeline } = require('stream');
 const parseByteRange = require('./byte-range');
 const { createHostGrantAuthorizer } = require('./host-grant-access');
@@ -344,8 +346,24 @@ module.exports = function (X) {
     srv.listen(8787, '0.0.0.0');
   }
   function stopRemote() { if (srv) { srv.close(); srv = null; } writeJ('remote.json', { ...readJ('remote.json', {}), on: false }); }
-  const lanIp = () => { const all = [].concat(...Object.values(os.networkInterfaces())).filter((i) => i.family === 'IPv4' && !i.internal); return (all.find((i) => i.address.startsWith('192.168.')) || all[0] || { address: 'localhost' }).address; };
-  ipcMain.handle('remoteStatus', () => { const s = readJ('remote.json', {}); return { on: !!srv, url: srv ? `http://${lanIp()}:8787/?k=${s.token}` : '' }; });
+  const lanIp = () => {
+    const all = [].concat(...Object.values(os.networkInterfaces())).filter((i) => i.family === 'IPv4' && !i.internal);
+    const privateIp = (address) => /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.)/.test(address);
+    return (all.find((i) => i.address.startsWith('192.168.')) || all.find((i) => i.address.startsWith('10.')) || all.find((i) => /^172\.(1[6-9]|2\d|3[01])\./.test(i.address)) || all.find((i) => privateIp(i.address)) || { address: 'localhost' }).address;
+  };
+  const pairingPayload = () => {
+    const account = readJ('cobre-id.json', {}), host = String(account.deviceId || '');
+    if (!srv || !/^[0-9a-f-]{36}$/i.test(host)) throw new Error('Ative o acesso remoto e entre no Cobre ID neste Desktop antes de parear.');
+    const address = lanIp();
+    if (address === 'localhost') throw new Error('Não encontrei um endereço privado da rede. Confira o Wi-Fi e use a conexão manual.');
+    const origin = `http://${address}:8787`, pairing = createDesktopPairingUri(host, origin);
+    return { host, origin, expires: pairing.expires, uri: pairing.uri };
+  };
+  ipcMain.handle('remotePairingQr', async () => {
+    const pairing = pairingPayload();
+    return { ...pairing, dataUrl: await QRCode.toDataURL(pairing.uri, { width: 260, margin: 2, errorCorrectionLevel: 'M', color: { dark: '#171310', light: '#ffffff' } }) };
+  });
+  ipcMain.handle('remoteStatus', () => { const s = readJ('remote.json', {}); return { on: !!srv, url: srv ? `http://${lanIp()}:8787` : '' }; });
   ipcMain.handle('remoteSet', (_e, on) => { if (on) startRemote(); else stopRemote(); return true; });
   ipcMain.handle('credits', async (_e, artist, album) => {
     const f = 'credits-' + crypto.createHash('md5').update(norm2(artist) + '|' + norm2(album)).digest('hex') + '.json', c = readJ(f, null);
