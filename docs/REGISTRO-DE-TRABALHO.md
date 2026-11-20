@@ -16,3 +16,9 @@
 ## Ajuste de build CI — 2026-11-20
 
 - A primeira execução do workflow Desktop falhou porque o electron-builder detectou CI e tentou publicar diretamente sem GH_TOKEN. O pacote local havia passado, pois não está sob CI. A causa foi corrigida em package.json com --publish never; agora só a etapa explícita do GitHub Actions cria a release.
+
+## Publicação oficial — Desktop 3.6.0
+
+- A build inicialmente falhou no GitHub porque o electron-builder inferiu publicação implícita em CI e não havia `GH_TOKEN`. `package.json` agora usa `--publish never`; a etapa explícita `softprops/action-gh-release` publica os artefatos. O build e o job de publicação passaram no workflow de tag.
+- Release pública: https://github.com/bruncosta077-boop/Cobre/releases/tag/cobre-desktop-v3.6.0. Instalador e ZIP retornam HTTP 200; o ZIP de atualização foi baixado e seu SHA-256 conferido com `checksums-sha256.txt`.
+- Checksums oficiais da release: EXE `eb560db2f3622002efca60b31511b7b68aa99476c14d5938d65fbe39c312c4c7`; ZIP portátil `cdcd6b80c4c643370837d2f67ffe0e6de26ec648fd1916d930de60949cf9cae3`; atualização interna `31b59cf552e03f87ee30b22f7bad03f10973e446103ebc64cda04b66f9068c75`.
