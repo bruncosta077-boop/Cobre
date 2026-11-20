@@ -1,5 +1,13 @@
 # Histórico de versões — Cobre Desktop
 
+## 3.7.0 — preferências recuperáveis
+
+- Corrige a migração das configurações salvas antes da troca para o protocolo seguro `cobre://app`.
+- Guarda uma cópia local automática das preferências no perfil do usuário e restaura chaves ausentes ao iniciar.
+- Adiciona exportação/importação manual de configurações; o arquivo não inclui senha nem token Cobre ID.
+- A conta continua armazenada separadamente, criptografada pelo Windows; playlists, biblioteca e dados locais permanecem no perfil do usuário durante atualizações normais.
+- Inclui [@dilucas00](https://github.com/dilucas00).
+
 ## 3.6.0 — 2026-11-20
 
 - Atualizado `music-metadata` para 12.7.0, corrigindo avisos de segurança no processamento de arquivos ASF, ID3, APE e EBML.

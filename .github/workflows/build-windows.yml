@@ -42,7 +42,8 @@ jobs:
       - name: Write SHA-256 checksums
         shell: pwsh
         run: |
-          Get-ChildItem release -File | Where-Object { $_.Name -match '^Cobre-(3\.6\.0-x64\.exe|3\.6\.0-x64\.zip|Update-v3\.6\.0-x64\.zip)$' } | ForEach-Object {
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          Get-ChildItem release -File | Where-Object { $_.Name -in @("Cobre-$version-x64.exe", "Cobre-$version-x64.zip", "Cobre-Update-v$version-x64.zip") } | ForEach-Object {
             $hash = Get-FileHash $_.FullName -Algorithm SHA256
             "$($hash.Hash.ToLower())  $($_.Name)"
           } | Set-Content release/checksums-sha256.txt
@@ -51,9 +52,9 @@ jobs:
         with:
           name: Cobre-Desktop-Windows-x64
           path: |
-            release/Cobre-3.6.0-x64.exe
-            release/Cobre-3.6.0-x64.zip
-            release/Cobre-Update-v3.6.0-x64.zip
+            release/Cobre-3.7.0-x64.exe
+            release/Cobre-3.7.0-x64.zip
+            release/Cobre-Update-v3.7.0-x64.zip
             release/checksums-sha256.txt
           if-no-files-found: error
           retention-days: 30
@@ -85,7 +86,7 @@ jobs:
             Consulte `CHANGELOG.md` no repositório para as notas completas.
           prerelease: false
           files: |
-            release/Cobre-3.6.0-x64.exe
-            release/Cobre-3.6.0-x64.zip
-            release/Cobre-Update-v3.6.0-x64.zip
+            release/Cobre-3.7.0-x64.exe
+            release/Cobre-3.7.0-x64.zip
+            release/Cobre-Update-v3.7.0-x64.zip
             release/checksums-sha256.txt

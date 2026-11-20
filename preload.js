@@ -1,4 +1,10 @@
 const { contextBridge, ipcRenderer, webFrame } = require('electron');
+try {
+  const saved = ipcRenderer.sendSync('preferences:bootstrap');
+  for (const [key, value] of Object.entries(saved || {})) {
+    if (localStorage.getItem(key) === null) localStorage.setItem(key, value);
+  }
+} catch {}
 contextBridge.exposeInMainWorld('api', {
   pick: () => ipcRenderer.invoke('pick'),
   cached: (dir) => ipcRenderer.invoke('cached', dir),
@@ -20,6 +26,9 @@ contextBridge.exposeInMainWorld('api', {
   unhide: () => ipcRenderer.invoke('unhide'),
   trash: (p) => ipcRenderer.invoke('trash', p),
   readFile: (p) => ipcRenderer.invoke('readFile', p),
+  preferencesSave: (items) => ipcRenderer.invoke('preferences:save', items),
+  preferencesExport: (items) => ipcRenderer.invoke('preferences:export', items),
+  preferencesImport: () => ipcRenderer.invoke('preferences:import'),
   health: () => ipcRenderer.invoke('health'),
   coverMeta: (p, a, b) => ipcRenderer.invoke('coverMeta', p, a, b),
   coverUpgrade: (p, a, b) => ipcRenderer.invoke('coverUpgrade', p, a, b),

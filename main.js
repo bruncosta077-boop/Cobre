@@ -8,6 +8,91 @@ const mm = require('music-metadata');
 const EXT = new Set(['.mp3', '.flac', '.wav', '.ogg', '.m4a', '.aac', '.opus']);
 protocol.registerSchemesAsPrivileged([{ scheme: 'cobre', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, codeCache: true } }]);
 let win;
+let preferenceSnapshot = {};
+let preferenceSnapshotJson = '';
+
+const preferenceFile = () => path.join(app.getPath('userData'), 'preferences-backup.json');
+function filterPreferences(input) {
+  const source = Array.isArray(input) ? input : Object.entries(input && typeof input === 'object' ? input : {});
+  const out = {};
+  let bytes = 0;
+  for (const entry of source) {
+    if (!Array.isArray(entry) || entry.length < 2) continue;
+    const key = String(entry[0] ?? '');
+    const value = entry[1];
+    if (!/^[a-zA-Z0-9._-]{1,100}$/.test(key) || /token|secret|password|apikey|api[_-]?key|auth|remote.?key|access.?key|lan.?key/i.test(key) || typeof value !== 'string' || value.length > 256_000) continue;
+    bytes += Buffer.byteLength(key) + Buffer.byteLength(value);
+    if (bytes > 1_500_000) break;
+    out[key] = value;
+  }
+  return out;
+}
+function readPreferenceSnapshot() {
+  try {
+    const data = JSON.parse(fs.readFileSync(preferenceFile(), 'utf8'));
+    if (data.app !== 'Cobre Desktop' || data.schema !== 1) return {};
+    return filterPreferences(data.preferences);
+  } catch { return {}; }
+}
+function writePreferenceSnapshot(input) {
+  const preferences = filterPreferences(input);
+  if (!Object.keys(preferences).length) return false;
+  const contents = JSON.stringify({ app: 'Cobre Desktop', schema: 1, savedAt: new Date().toISOString(), preferences }, null, 2);
+  const file = preferenceFile(), temp = file + '.tmp';
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(temp, contents);
+  fs.renameSync(temp, file);
+  preferenceSnapshot = preferences;
+  preferenceSnapshotJson = JSON.stringify(preferences);
+  return true;
+}
+ipcMain.on('preferences:bootstrap', (event) => { event.returnValue = preferenceSnapshot; });
+ipcMain.handle('preferences:save', (_event, input) => {
+  const safe = filterPreferences(input), serialized = JSON.stringify(safe);
+  if (serialized !== preferenceSnapshotJson) writePreferenceSnapshot(safe);
+  return true;
+});
+ipcMain.handle('preferences:export', async (_event, input) => {
+  const preferences = filterPreferences(input);
+  const result = await dialog.showSaveDialog(win, { title: 'Salvar backup do Cobre', defaultPath: 'Cobre-configuracoes-backup.json', filters: [{ name: 'Backup do Cobre', extensions: ['json'] }] });
+  if (result.canceled || !result.filePath) return false;
+  fs.writeFileSync(result.filePath, JSON.stringify({ app: 'Cobre Desktop', schema: 1, savedAt: new Date().toISOString(), preferences }, null, 2));
+  writePreferenceSnapshot(preferences);
+  return true;
+});
+ipcMain.handle('preferences:import', async () => {
+  const result = await dialog.showOpenDialog(win, { title: 'Restaurar backup do Cobre', properties: ['openFile'], filters: [{ name: 'Backup do Cobre', extensions: ['json'] }] });
+  if (result.canceled || !result.filePaths[0]) return null;
+  const file = result.filePaths[0], stat = fs.statSync(file);
+  if (stat.size > 2_000_000) throw new Error('O arquivo de backup excede o limite de 2 MB.');
+  const parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+  if (parsed.app !== 'Cobre Desktop' || parsed.schema !== 1) throw new Error('Este arquivo não é um backup compatível do Cobre Desktop.');
+  const preferences = filterPreferences(parsed.preferences);
+  if (!Object.keys(preferences).length) throw new Error('O backup não contém preferências válidas.');
+  writePreferenceSnapshot(preferences);
+  return preferences;
+});
+
+async function migrateLegacyPreferences() {
+  preferenceSnapshot = readPreferenceSnapshot();
+  preferenceSnapshotJson = JSON.stringify(preferenceSnapshot);
+  if (Object.keys(preferenceSnapshot).length) return;
+  let legacy;
+  try {
+    legacy = new BrowserWindow({ show: false, width: 1, height: 1, webPreferences: { nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true } });
+    await legacy.loadURL(pathToFileURL(path.join(__dirname, 'index.html')).href);
+    const raw = await legacy.webContents.executeJavaScript('JSON.stringify(Object.entries(localStorage))');
+    const migrated = filterPreferences(JSON.parse(raw || '[]'));
+    if (Object.keys(migrated).length) {
+      writePreferenceSnapshot(migrated);
+      console.info(`Backup local criado a partir de ${Object.keys(migrated).length} preferências antigas do Cobre.`);
+    }
+  } catch (error) {
+    console.warn('Migração das preferências antigas do Cobre não concluída:', error.message);
+  } finally {
+    if (legacy && !legacy.isDestroyed()) legacy.destroy();
+  }
+}
 
 const mediaById = new Map();
 const mediaIdByPath = new Map();
@@ -406,40 +491,42 @@ ipcMain.on('quit', () => { quitting = true; app.quit(); });
 app.whenReady().then(() => {
   if (!app.hasSingleInstanceLock()) return;
   installAppProtocol();
-  win = new BrowserWindow({
-    width: 1040, height: 700, minWidth: 760, minHeight: 520,
-    backgroundColor: '#121110', autoHideMenuBar: true, title: 'Cobre', icon: path.join(__dirname, 'icon.ico'),
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: false,
-      contextIsolation: true,
-      sandbox: true,
-      webSecurity: true,
-      backgroundThrottling: false
-    }
+  return migrateLegacyPreferences().then(() => {
+    win = new BrowserWindow({
+      width: 1040, height: 700, minWidth: 760, minHeight: 520,
+      backgroundColor: '#121110', autoHideMenuBar: true, title: 'Cobre', icon: path.join(__dirname, 'icon.ico'),
+      webPreferences: {
+        preload: path.join(__dirname, 'preload.js'),
+        nodeIntegration: false,
+        contextIsolation: true,
+        sandbox: true,
+        webSecurity: true,
+        backgroundThrottling: false
+      }
+    });
+    restrictWindowNavigation(win, 'index.html');
+    win.removeMenu();
+    try {
+      tray = new Tray(nativeImage.createFromPath(path.join(__dirname, 'icon.png')).resize({ width: 16, height: 16 }));
+      tray.setToolTip('Cobre');
+      tray.setContextMenu(Menu.buildFromTemplate([
+        { label: 'Abrir', click: () => { win.show(); win.focus(); } },
+        { label: 'Tocar / pausar', click: () => win.webContents.send('key', 'toggle') },
+        { label: 'Próxima', click: () => win.webContents.send('key', 'next') },
+        { label: 'Anterior', click: () => win.webContents.send('key', 'prev') },
+        { label: 'Conta Cobre…', click: () => { try { require('./cobre-id-main').open(); } catch (e) { console.error('cobre-id', e); } } },
+        { type: 'separator' },
+        { label: 'Sair do Cobre', click: () => { quitting = true; app.quit(); } }
+      ]));
+      tray.on('click', () => { if (win.isVisible()) win.hide(); else { win.show(); win.focus(); } });
+    } catch {}
+    win.on('close', (e) => { if (!quitting && bgOn) { e.preventDefault(); win.hide(); } });
+    win.loadURL('cobre://app/index.html');
+    win.on('enter-full-screen', () => win.webContents.send('fs', true));
+    win.on('leave-full-screen', () => win.webContents.send('fs', false));
+    const keys = { MediaPlayPause: 'toggle', MediaNextTrack: 'next', MediaPreviousTrack: 'prev' };
+    for (const [k, v] of Object.entries(keys)) globalShortcut.register(k, () => win.webContents.send('key', v));
   });
-  restrictWindowNavigation(win, 'index.html');
-  win.removeMenu();
-  try {
-    tray = new Tray(nativeImage.createFromPath(path.join(__dirname, 'icon.png')).resize({ width: 16, height: 16 }));
-    tray.setToolTip('Cobre');
-    tray.setContextMenu(Menu.buildFromTemplate([
-      { label: 'Abrir', click: () => { win.show(); win.focus(); } },
-      { label: 'Tocar / pausar', click: () => win.webContents.send('key', 'toggle') },
-      { label: 'Próxima', click: () => win.webContents.send('key', 'next') },
-      { label: 'Anterior', click: () => win.webContents.send('key', 'prev') },
-      { label: 'Conta Cobre…', click: () => { try { require('./cobre-id-main').open(); } catch (e) { console.error('cobre-id', e); } } },
-      { type: 'separator' },
-      { label: 'Sair do Cobre', click: () => { quitting = true; app.quit(); } }
-    ]));
-    tray.on('click', () => { if (win.isVisible()) win.hide(); else { win.show(); win.focus(); } });
-  } catch {}
-  win.on('close', (e) => { if (!quitting && bgOn) { e.preventDefault(); win.hide(); } });
-  win.loadURL('cobre://app/index.html');
-  win.on('enter-full-screen', () => win.webContents.send('fs', true));
-  win.on('leave-full-screen', () => win.webContents.send('fs', false));
-  const keys = { MediaPlayPause: 'toggle', MediaNextTrack: 'next', MediaPreviousTrack: 'prev' };
-  for (const [k, v] of Object.entries(keys)) globalShortcut.register(k, () => win.webContents.send('key', v));
 });
 
 app.on('will-quit', () => globalShortcut.unregisterAll());

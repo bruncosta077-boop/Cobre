@@ -1,4 +1,5 @@
 const $ = (s) => document.querySelector(s);
+setInterval(() => { try { api.preferencesSave(Object.entries(localStorage)); } catch {} }, 5000);
 const FREQ = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
 const BL = ['31', '62', '125', '250', '500', '1k', '2k', '4k', '8k', '16k'];
 const TILT = [1, 0.85, 0.7, 0.4, 0.15, 0, -0.15, -0.4, -0.7, -1];
@@ -184,7 +185,7 @@ let lines = [], synced = false, li = -1, tab = 'lib', gs = [];
 let mode = localStorage.mode || 'albums', scope = { artist: null, album: null }, net = localStorage.net !== '0';
 const cur = () => q[pos];
 let revs = {}, rvTimer, rvOpen = false;
-const VERSION = '3.6.0';
+const VERSION = '3.7.0';
 const rk = (g) => g.artist + '|' + g.album;
 const saveRevs = () => api.revSave(revs);
 const starsHtml = (n) => [1, 2, 3, 4, 5].map((i) => `<span data-s="${i}" class="${i <= n ? 'on' : ''}">★</span>`).join('');
@@ -536,6 +537,7 @@ function gearHtml() {
     '<div class="pr"><select id="lyst">' + opts([['', 'Padrão'], ['hc', 'Alto contraste'], ['ac', 'Cor de destaque']], localStorage.lyst || '') + '</select>' +
     '<select id="lysz">' + opts([['', 'Tamanho normal'], ['l', 'Grande'], ['xl', 'Enorme']], localStorage.lysz || '') + '</select></div>' +
     '<p class="settings-section">Aplicativo</p><label class="net"><input type="checkbox" id="bgc"' + (localStorage.bg !== '0' ? ' checked' : '') + '> Continuar tocando ao fechar a janela</label>' +
+    '<p class="settings-section">Backup das configurações</p><div class="pr"><button class="lnk" data-act="backupExport">Salvar backup…</button><button class="lnk" data-act="backupImport">Restaurar backup…</button></div><p class="mu">O backup não inclui senha nem token da conta.</p>' +
     '<p class="settings-section">Manutenção</p><div class="pr"><button class="lnk" data-act="rescan">Reanalisar biblioteca</button><button class="lnk" data-act="unhide">Restaurar removidos</button><button class="lnk" data-act="health">Saúde do Cobre</button><button class="lnk" data-act="covers">Verificar capas</button><button class="lnk" data-act="updates">Atualizar Cobre…</button><button class="lnk" data-act="about">Sobre e licença</button><button class="lnk" data-act="dev">Diagnóstico</button></div>' +
     '<p class="mu">Versão ' + VERSION + ' · © 2026 Bruno C S Moraes</p>';
 }
@@ -559,6 +561,8 @@ $('#pop').onclick = (e) => {
   if (t.dataset.dev) { $('#out').value = t.dataset.dev; $('#out').onchange({ target: $('#out') }); $('#outb').title = 'Saída: ' + t.textContent; $('#pop').hidden = true; }
   else if (t.dataset.acc) setAccent(t.dataset.acc);
   else if (t.dataset.act === 'account') { $('#pop').hidden = true; api.ipc.send('cid:open'); }
+  else if (t.dataset.act === 'backupExport') { api.preferencesExport(Object.entries(localStorage)).then((ok) => { if (ok) toast('Backup salvo'); }).catch((error) => toast(error.message || 'Não foi possível salvar o backup')); }
+  else if (t.dataset.act === 'backupImport') { api.preferencesImport().then((items) => { if (!items) return; for (const [key, value] of Object.entries(items)) localStorage.setItem(key, value); return api.preferencesSave(Object.entries(localStorage)).then(() => location.reload()); }).catch((error) => toast(error.message || 'Não foi possível restaurar o backup')); }
   else if (t.dataset.act === 'pick') { $('#pop').hidden = true; pickFolder(); }
   else if (t.dataset.act === 'rescan') { $('#pop').hidden = true; if (localStorage.dir) load(localStorage.dir); }
   else if (t.dataset.act === 'unhide') { api.unhide().then(() => { $('#pop').hidden = true; if (localStorage.dir) load(localStorage.dir); toast('Itens restaurados na biblioteca'); }); }

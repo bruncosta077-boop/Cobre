@@ -4,18 +4,18 @@
   <img src="docs/images/cobre-desktop-biblioteca.jpg" alt="Captura do Cobre Desktop em sua biblioteca de música" width="100%">
   <h1>Cobre Desktop</h1>
   <p>Reprodutor de música local para Windows</p>
-  <p><strong>Versão 3.6.0</strong></p>
+  <p><strong>Versão 3.7.0</strong></p>
 </div>
 
 Desenvolvimento principal: Bruno C S Moraes · Contribuição ao projeto: [@dilucas00](https://github.com/dilucas00).
 
 ## Downloads
 
-Os pacotes públicos mais recentes estão na [página de lançamento](https://github.com/bruncosta077-boop/Cobre/releases/tag/cobre-desktop-v3.6.0).
+Os pacotes públicos mais recentes estão na [página de lançamento](https://github.com/bruncosta077-boop/Cobre/releases/tag/cobre-desktop-v3.7.0).
 
-- **Instalador:** `Cobre-3.6.0-x64.exe`
-- **Versão portátil:** `Cobre-3.6.0-x64.zip`
-- **Atualização dentro do app:** `Cobre-Update-v3.6.0-x64.zip` — atualiza instalações empacotadas e portáteis descompactadas a partir da versão 3.6.0.
+- **Instalador:** `Cobre-3.7.0-x64.exe`
+- **Versão portátil:** `Cobre-3.7.0-x64.zip`
+- **Atualização dentro do app:** `Cobre-Update-v3.7.0-x64.zip` — atualiza instalações empacotadas e portáteis descompactadas a partir da versão 3.6.0.
 
 ## Sobre o projeto
 
@@ -40,7 +40,7 @@ Os pacotes são gerados na pasta `release/`.
 
 ## Atualização dentro do app
 
-Acesse **Configurações → Manutenção → Atualizar Cobre**. O app consulta as releases do GitHub, mostra as notas, verifica o SHA-256 e atualiza instalações empacotadas em `app.asar` ou portáteis descompactadas, com cópia de segurança e tentativa de recuperação em falha. Instalações 3.5.0 precisam atualizar para 3.6.0 uma vez pelo instalador ou ZIP portátil; depois disso o atualizador interno passa a funcionar.
+Acesse **Configurações → Manutenção → Atualizar Cobre**. O app consulta as releases do GitHub, mostra as notas, verifica o SHA-256 e atualiza instalações empacotadas em `app.asar` ou portáteis descompactadas, com cópia de segurança e tentativa de recuperação em falha. Instalações 3.5.0 precisam atualizar para 3.6.0 uma vez pelo instalador ou ZIP portátil; depois disso o atualizador interno passa a funcionar. As preferências da 3.5 também são migradas para o armazenamento seguro da 3.7.
 
 ## Ecossistema Cobre
 
