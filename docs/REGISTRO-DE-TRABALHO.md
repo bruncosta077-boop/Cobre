@@ -11,3 +11,8 @@
 - O instalador de atualização foi executado em diretórios temporários: instalação simulada escreveu a versão e preservou cópia anterior; falha induzida ao copiar um arquivo seguinte restaurou o `app.asar` antigo e gerou nota de falha.
 - O pacote interno final local tem 1,18 MiB, manifesto de 446 arquivos, dependências de produção e `app.asar` igual ao build. SHA-256 local do EXE `2b541e389ff0530aec121eb42616919b8a3f445207d5142b785a40466c5f594b`; ZIP portátil `11bca2341f9f39b8fa94eea91d280b44b8a8c05d9a86eae443a56258697be4d`; pacote interno `c0357821fa261ddf1e54c31a806d9f163863e866ff8e0c89f35036d443a414d3`.
 - Estes são hashes do build local; os artefatos da release oficial são reconstruídos pelo GitHub Actions. O EXE não possui assinatura digital. Streaming real de biblioteca e validação do fluxo de download/atualização contra uma release publicada continuam pendentes.
+
+
+## Ajuste de build CI — 2026-11-20
+
+- A primeira execução do workflow Desktop falhou porque o electron-builder detectou CI e tentou publicar diretamente sem GH_TOKEN. O pacote local havia passado, pois não está sob CI. A causa foi corrigida em package.json com --publish never; agora só a etapa explícita do GitHub Actions cria a release.
