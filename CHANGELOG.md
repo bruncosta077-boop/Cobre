@@ -1,5 +1,15 @@
 # Histórico de versões — Cobre Desktop
 
+## 3.9.0 — base de acesso Cobre ID por aparelho
+
+- Conta Cobre mostra solicitações recebidas de Mobile/TV e permite aprovar ou recusar cada aparelho.
+- Presença do Desktop informa quando o host de acesso remoto está ativo.
+- Acrescentadas rotas locais protegidas por concessões Cobre ID: biblioteca, capas, áudio com `Range`, estado do player e comandos de reprodução/volume/busca.
+- O Desktop valida a concessão no Cobre Server e guarda a validação positiva por até 5 segundos; indisponibilidade do serviço falha fechada para as rotas protegidas.
+- O contrato novo não remove ainda as rotas antigas de chave compartilhada. O Mobile precisa migrar para o contrato protegido antes de desativar o caminho legado.
+- Atualizador interno e pacote incremental incluem o novo módulo de autorização.
+- A validação local e o build de distribuição ainda estão em andamento; não é release publicada.
+
 ## 3.8.0 — transmissão local mais robusta
 
 - O acesso remoto agora trata corretamente faixas de bytes, incluindo pedidos parciais, sufixos, intervalos abertos e posições inválidas. Isso melhora seek e retomada ao transmitir áudio para o Mobile.

@@ -75,6 +75,22 @@ class CobreIdClient {
   removeDevice(id) { return this._auth('DELETE', '/v1/devices/' + id); }
   authorizeDevice(userCode) { return this._auth('POST', '/v1/device/authorize', { userCode, approve: true }); }
   presence(meta = {}) { return this._auth('POST', '/v1/presence', { meta }); }
+  hostAccessRequests() {
+    if (!this.s.deviceId) throw new CobreIdError(401, 'signed_out', 'Entre na sua conta Cobre.');
+    return this._auth('GET', `/v1/hosts/${encodeURIComponent(this.s.deviceId)}/access-requests`).then((j) => j.requests || []);
+  }
+  approveHostAccess(requestId) {
+    if (!this.s.deviceId || !/^[0-9a-f-]{36}$/i.test(String(requestId || ''))) throw new CobreIdError(400, 'bad_request', 'Solicitação inválida.');
+    return this._auth('POST', `/v1/hosts/${encodeURIComponent(this.s.deviceId)}/access-requests/${encodeURIComponent(requestId)}/approve`, {});
+  }
+  denyHostAccess(requestId) {
+    if (!this.s.deviceId || !/^[0-9a-f-]{36}$/i.test(String(requestId || ''))) throw new CobreIdError(400, 'bad_request', 'Solicitação inválida.');
+    return this._auth('POST', `/v1/hosts/${encodeURIComponent(this.s.deviceId)}/access-requests/${encodeURIComponent(requestId)}/deny`, {});
+  }
+  validateHostGrant(grantToken) {
+    if (typeof grantToken !== 'string' || grantToken.length > 4096) throw new CobreIdError(401, 'invalid_host_grant', 'Permissão do aparelho inválida.');
+    return this._auth('POST', '/v1/hosts/access-grants/validate', { grantToken });
+  }
   async signOut() {
     try { await this._auth('POST', '/v1/logout', {}); } catch {}
     this.access = null; delete this.s.refresh; delete this.s.deviceId; this._save();

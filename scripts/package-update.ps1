@@ -8,7 +8,7 @@ if (!$OutputDirectory) { $OutputDirectory = Join-Path $repo 'release' }
 New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
 $stage = Join-Path $env:TEMP ('cobre-update-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Force -Path $stage | Out-Null
-$appFiles = @('account-preload.js','account.html','account-renderer.js','byte-range.js','cobre-id-client.js','cobre-id-main.js','features-main.js','features.js','icon.ico','icon.png','index.html','main.js','mini-preload.js','mini-renderer.js','mini.html','package.json','preload.js','remote.html','renderer.js','update-main.js')
+$appFiles = @('account-preload.js','account.html','account-renderer.js','byte-range.js','host-grant-access.js','cobre-id-client.js','cobre-id-main.js','features-main.js','features.js','icon.ico','icon.png','index.html','main.js','mini-preload.js','mini-renderer.js','mini.html','package.json','preload.js','remote.html','renderer.js','update-main.js')
 $paths = [System.Collections.Generic.List[string]]::new()
 try {
   foreach ($name in $appFiles) {

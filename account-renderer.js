@@ -34,18 +34,47 @@ async function drawDevices() {
   }
 }
 
+async function drawHostRequests() {
+  const r = await api.hostRequests();
+  if (!r.ok) {
+    if (r.code === 'signed_out' || r.code === 'device_revoked') return render();
+    $('host-request-list').textContent = r.error || 'Não foi possível consultar os pedidos.';
+    return;
+  }
+  const box = $('host-request-list'); box.replaceChildren();
+  if (!r.data.length) { box.textContent = 'Nenhum pedido pendente.'; return; }
+  for (const request of r.data) {
+    const row = document.createElement('div'); row.className = 'request';
+    const detail = document.createElement('div');
+    const name = document.createElement('b'); name.textContent = request.clientName || 'Aparelho sem nome';
+    const type = document.createElement('span'); type.className = 'small mu'; type.textContent = `${TYPES[request.clientType] || request.clientType} · solicita acesso à biblioteca/áudio`;
+    detail.append(name, type);
+    const actions = document.createElement('div'); actions.className = 'request-actions';
+    const approve = document.createElement('button'); approve.className = 'pri'; approve.textContent = 'Permitir';
+    const deny = document.createElement('button'); deny.textContent = 'Recusar';
+    const respond = async (allow) => {
+      approve.disabled = deny.disabled = true;
+      const result = allow ? await api.approveHostAccess(request.requestId) : await api.denyHostAccess(request.requestId);
+      if (!result.ok) { $('host-request-list').textContent = result.error || 'Não foi possível responder ao pedido.'; await drawHostRequests(); return; }
+      await drawHostRequests();
+    };
+    approve.onclick = () => respond(true); deny.onclick = () => respond(false);
+    actions.append(approve, deny); row.append(detail, actions); box.append(row);
+  }
+}
+
 async function render() {
   clearInterval(timer);
   const r = await api.status(); const s = r.data;
   const logged = r.ok && s.loggedIn;
   for (const id of ['out']) $(id).classList.toggle('hide', logged);
-  for (const id of ['in', 'pair', 'devs', 'outRow']) $(id).classList.toggle('hide', !logged);
+  for (const id of ['in', 'pair', 'host-requests', 'devs', 'outRow']) $(id).classList.toggle('hide', !logged);
   if (!logged) {
     if (r.ok) { $('email').value = s.email || ''; $('srv').value = s.server || s.defaultServer || 'http://localhost:8080'; }
     return;
   }
   $('me').textContent = s.email; $('srvTxt').textContent = s.server; setLink(s.link || { ok: false, text: '' });
-  drawDevices(); timer = setInterval(drawDevices, 10000);
+  drawDevices(); drawHostRequests(); timer = setInterval(() => { drawDevices(); drawHostRequests(); }, 5000);
 }
 
 async function go(create) {

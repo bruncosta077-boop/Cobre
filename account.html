@@ -18,6 +18,7 @@
   .dev .n{flex:1;min-width:0} .dev .n b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .small{font-size:12px} .hide{display:none}
   .pairrow{display:flex;gap:8px;align-items:center}.pairrow input{flex:1;min-width:0;text-transform:uppercase;letter-spacing:.12em}.pairrow button{flex:none}
+  .request{display:flex;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--line)}.request:first-child{border-top:0}.request>div:first-child{flex:1;min-width:0}.request b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.request-actions{display:flex;gap:6px;flex:none}.request-actions button{padding:7px 9px;font-size:12px}
 </style></head><body>
 <h1>Conta Cobre</h1>
 <div class="mu">Uma conta para o computador, o celular e a TV.</div>
@@ -44,6 +45,7 @@
   <div class="pairrow"><input id="tvCode" maxlength="9" placeholder="ABCD-2345" aria-label="Código exibido na TV"><button class="pri" id="tvApprove">Autorizar TV</button></div>
   <div class="err" id="pairErr"></div>
 </div>
+<div id="host-requests" class="card hide"><b>Pedidos de acesso a este computador</b><div id="host-request-list" class="small mu" style="margin-top:8px">Carregando…</div><div class="small mu" style="margin-top:8px">Aprove somente aparelhos que você reconhece. O consentimento dura até 30 dias; o acesso é renovado com tokens curtos.</div></div>
 <div id="devs" class="card hide"><b>Seus dispositivos</b><div id="list" style="margin-top:6px"></div>
   <div class="err" id="err2"></div></div>
 <div class="row hide" id="outRow"><button id="bout">Sair desta conta</button></div>

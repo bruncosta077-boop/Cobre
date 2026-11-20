@@ -36,7 +36,7 @@ function init(c) {
 
   const beat = async () => {
     if (!client?.loggedIn) { link = { ok: false, text: 'Sem conta conectada' }; return push(); }
-    try { await client.presence({ app: ctx.version || '3.1', name: os.hostname() }); link = { ok: true, text: 'Conectado — este computador aparece online no celular' }; }
+    try { await client.presence({ appVersion: ctx.version || '3.1', platform: process.platform, name: os.hostname(), desktopHostActive: Boolean(ctx.remoteHostActive?.()) }); link = { ok: true, text: 'Conectado — este computador aparece online no celular' }; }
     catch (e) { link = { ok: false, text: e.code === 'network' ? 'Sem conexão com o servidor' : e.message }; }
     push();
   };
@@ -49,6 +49,9 @@ function init(c) {
   ipcMain.handle('cid:login', wrap(async (d) => { const i = await make().signIn(d); startBeat(); return i; }));
   ipcMain.handle('cid:logout', wrap(async () => { stopBeat(); await make().signOut(); link = { ok: false, text: 'Sem conta conectada' }; }));
   ipcMain.handle('cid:devices', wrap(() => make().devices()));
+  ipcMain.handle('cid:hostRequests', wrap(() => make().hostAccessRequests()));
+  ipcMain.handle('cid:hostApprove', wrap((requestId) => make().approveHostAccess(requestId)));
+  ipcMain.handle('cid:hostDeny', wrap((requestId) => make().denyHostAccess(requestId)));
   ipcMain.handle('cid:remove', wrap((id) => make().removeDevice(id)));
   ipcMain.handle('cid:authorizeDevice', wrap((code) => make().authorizeDevice(code)));
   ipcMain.handle('cid:close', wrap(async () => { if (win && !win.isDestroyed()) win.close(); }));
@@ -60,6 +63,7 @@ function init(c) {
     if (!make().s.neverAsk) promptTimer = setTimeout(open, c.promptDelay ?? 1200);
   });
   app.on('before-quit', () => { stopBeat(); if (promptTimer) clearTimeout(promptTimer); });
+  return { validateHostGrant: (grantToken) => make().validateHostGrant(grantToken) };
 }
 
 function open() {

@@ -2,6 +2,7 @@
 const http = require('http'), os = require('os');
 const { pipeline } = require('stream');
 const parseByteRange = require('./byte-range');
+const { createHostGrantAuthorizer } = require('./host-grant-access');
 module.exports = function (X) {
   const { app, ipcMain, BrowserWindow, dialog, clipboard, nativeImage, screen, path, fs, crypto, mm, pathToFileURL, getWin, H } = X;
   const { curCover, ckey, customOf, clearCustom, CDIR, UA, queued, wait, LIB } = H;
@@ -12,6 +13,10 @@ module.exports = function (X) {
   const norm2 = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[\(\[].*?[\)\]]/g, '').replace(/\b(deluxe|remaster(ed)?|edition|expanded|anniversary|version|bonus|special)\b.*$/, '').replace(/[^a-z0-9]/g, '');
   const cl = (s) => String(s || '').replace(/["\\]/g, '');
   const send = (ch, ...a) => { const w = getWin(); if (w && !w.isDestroyed()) w.webContents.send(ch, ...a); };
+  const authorizeHostGrant = createHostGrantAuthorizer({ validate: (token) => {
+    if (typeof X.authorizeHostGrant !== 'function') throw new Error('Cobre ID authorization is unavailable');
+    return X.authorizeHostGrant(token);
+  }, ttlMs: 5_000 });
 
   // ---------- configurações simples
   ipcMain.handle('settingsGet', () => { const s = readJ('settings.json', {}); return { hasAiKey: !!s.aiKey, aiModel: s.aiModel || '' }; });
@@ -244,10 +249,56 @@ module.exports = function (X) {
   const rtracks = () => { try { const st = fs.statSync(LIB()); if (st.mtimeMs !== rt.m) rt = { m: st.mtimeMs, v: JSON.parse(fs.readFileSync(LIB(), 'utf8')).tracks || [] }; } catch {} return rt.v; };
   async function handle(req, res, token) {
     const u = new URL(req.url, 'http://x'), ck = ((req.headers.cookie || '').match(/ck=([^;]+)/) || [])[1];
-    if ((u.searchParams.get('k') || ck) !== token) { res.writeHead(401, { 'Content-Type': 'text/plain; charset=utf-8' }); return res.end('Acesso negado. Use o endereço completo mostrado no Cobre.'); }
+    const protectedPath = /^\/v1\/(?:library|now-playing)$/.test(u.pathname) || u.pathname === '/v1/commands' || /^\/v1\/tracks\/\d+\/(?:cover|stream)$/.test(u.pathname);
+    let grant = null;
+    if (protectedPath) {
+      const bearer = /^Bearer\s+(.+)$/i.exec(req.headers.authorization || '');
+      if (!bearer) { res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8', 'WWW-Authenticate': 'Bearer', 'Cache-Control': 'no-store' }); return res.end('{"error":"unauthorized"}'); }
+      const requiredScope = u.pathname === '/v1/library' || u.pathname.endsWith('/cover') ? 'library.read'
+        : u.pathname === '/v1/now-playing' ? 'playback.read' : u.pathname === '/v1/commands' ? 'playback.control' : 'stream';
+      grant = await authorizeHostGrant(bearer[1], requiredScope);
+      if (!grant.ok) { const status = grant.status || 401; res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); return res.end(JSON.stringify({ error: status === 403 ? 'forbidden' : status === 503 ? 'authorization_unavailable' : 'invalid_host_grant' })); }
+      const safeMethod = u.pathname === '/v1/commands' ? req.method === 'POST' : req.method === 'GET' || (req.method === 'HEAD' && /^\/v1\/tracks\/\d+\/(?:cover|stream)$/.test(u.pathname));
+      if (!safeMethod) { res.writeHead(405, { Allow: u.pathname === '/v1/commands' ? 'POST' : 'GET, HEAD', 'Cache-Control': 'no-store' }); return res.end(); }
+    } else if ((u.searchParams.get('k') || ck) !== token) { res.writeHead(401, { 'Content-Type': 'text/plain; charset=utf-8' }); return res.end('Acesso negado. Use o endereço completo mostrado no Cobre.'); }
     const hdr = { 'Set-Cookie': `ck=${token}; Path=/; SameSite=Lax` };
     if (u.pathname === '/') { res.writeHead(200, { ...hdr, 'Content-Type': 'text/html; charset=utf-8' }); return res.end(fs.readFileSync(path.join(__dirname, 'remote.html'))); }
     const T = rtracks();
+    if (u.pathname === '/v1/library') {
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+      return res.end(JSON.stringify({ tracks: T.map((t, i) => ({ id: i, title: t.title, artist: t.artist, album: t.album, year: t.year, genre: t.genre, durationSeconds: Math.round(t.dur || 0), trackNumber: t.no || 0 })) }));
+    }
+    if (u.pathname === '/v1/now-playing') {
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+      return res.end(JSON.stringify({ title: String(np.title || '').slice(0, 512), artist: String(np.artist || '').slice(0, 512),
+        album: String(np.album || '').slice(0, 512), playing: np.playing === true,
+        positionSeconds: Number.isFinite(np.pos) ? Math.max(0, np.pos) : 0,
+        durationSeconds: Number.isFinite(np.dur) ? Math.max(0, np.dur) : 0,
+        volume: Number.isFinite(np.vol) ? Math.max(0, Math.min(100, np.vol)) : 0,
+        trackId: T.findIndex((x) => x.path === np.path) }));
+    }
+    if (u.pathname === '/v1/commands') {
+      let raw = '';
+      try {
+        for await (const chunk of req) {
+          raw += chunk.toString('utf8');
+          if (Buffer.byteLength(raw) > 4096) { res.writeHead(413, { 'Cache-Control': 'no-store' }); return res.end('{"error":"too_large"}'); }
+        }
+      } catch { res.writeHead(400); return res.end(); }
+      let command;
+      try { command = raw ? JSON.parse(raw) : null; } catch { command = null; }
+      if (!command || typeof command !== 'object' || Array.isArray(command)) { res.writeHead(400); return res.end('{"error":"bad_json"}'); }
+      const action = command.action;
+      let payload;
+      if (action === 'toggle' || action === 'next' || action === 'previous') payload = { c: action === 'previous' ? 'prev' : action };
+      else if (action === 'play' && Number.isSafeInteger(command.trackId) && T[command.trackId]) payload = { c: 'play', paths: [T[command.trackId].path], i: 0 };
+      else if (action === 'volume' && Number.isFinite(command.value) && command.value >= 0 && command.value <= 100) payload = { c: 'vol', v: command.value };
+      else if (action === 'seek' && Number.isFinite(command.positionSeconds) && command.positionSeconds >= 0 && Number.isFinite(np.dur) && np.dur > 0 && command.positionSeconds <= np.dur) payload = { c: 'seek', v: command.positionSeconds / np.dur * 100 };
+      else { res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' }); return res.end('{"error":"bad_command"}'); }
+      send('remoteCmd', payload);
+      res.writeHead(202, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+      return res.end('{"accepted":true}');
+    }
     if (u.pathname === '/api/np') { res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' }); return res.end(JSON.stringify({ ...np, id: T.findIndex((x) => x.path === np.path) })); }
     if (u.pathname === '/api/cmd') {
       const ids = (u.searchParams.get('ids') || '').split(',').filter(Boolean).map(Number);
@@ -255,14 +306,16 @@ module.exports = function (X) {
       res.writeHead(200, { 'Content-Type': 'application/json' }); return res.end('{"ok":true}');
     }
     if (u.pathname === '/api/lib') { res.writeHead(200, { ...hdr, 'Content-Type': 'application/json; charset=utf-8' }); return res.end(JSON.stringify(T.map((t, i) => [i, t.title, t.artist, t.album, t.year, t.genre, Math.round(t.dur || 0), t.no || 0]))); }
-    const m = u.pathname.match(/^\/(cover|stream)\/(\d+)$/), t = m && T[+m[2]];
+    const m = u.pathname.match(/^\/(cover|stream)\/(\d+)$/);
+    const v1 = u.pathname.match(/^\/v1\/tracks\/(\d+)\/(cover|stream)$/);
+    const kind = m ? m[1] : v1?.[2], trackId = m ? +m[2] : v1 ? +v1[1] : -1, t = T[trackId];
     if (!t) { res.writeHead(404); return res.end(); }
-    if (m[1] === 'cover') {
+    if (kind === 'cover') {
       const k = t.artist + '|' + t.album;
       if (!rcache.has(k)) { const c = await curCover(t.path, t.artist, t.album); rcache.set(k, c.img && !c.img.isEmpty() ? c.img.resize({ width: 320 }).toJPEG(80) : null); }
       const b = rcache.get(k);
       if (!b) { res.writeHead(404); return res.end(); }
-      res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'max-age=86400' }); return res.end(b);
+      res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': v1 ? 'private, max-age=86400' : 'max-age=86400' }); return res.end(b);
     }
     if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405, { Allow: 'GET, HEAD' }); return res.end(); }
     let size;
@@ -427,4 +480,5 @@ module.exports = function (X) {
     } catch { return null; }
   });
   app.whenReady().then(() => { if (readJ('remote.json', {}).on) startRemote(); });
+  return { isRemoteActive: () => Boolean(srv) };
 };
