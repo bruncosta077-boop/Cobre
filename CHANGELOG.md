@@ -1,5 +1,13 @@
 # Histórico de versões — Cobre Desktop
 
+## 3.12.0 — diagnóstico de acesso remoto
+
+- Corrigido o erro que mascarava falhas de autorização do Cobre ID como HTTP 503 genérico.
+- Permissões expiradas ou revogadas agora retornam HTTP 401; escopos insuficientes retornam HTTP 403; falhas reais de comunicação com o Cobre ID permanecem HTTP 503 com códigos específicos.
+- A resposta continua sem expor tokens, credenciais ou mensagens internas.
+- Inclui cobertura automatizada para autorização expirada, revogada, sem escopo e servidor indisponível.
+- Esta correção permite ao Cobre Mobile indicar a ação adequada e solicitar novo pareamento por QR quando necessário.
+
 ## 3.11.0 — nova experiência visual
 
 - Repaginada a interface com a identidade visual Cobre, navegação lateral e controles de reprodução reunidos numa barra inferior.

@@ -77,12 +77,11 @@ jobs:
         with:
           name: Cobre Desktop ${{ github.ref_name }}
           body: |
-            ## Cobre Desktop 3.11.0 — nova experiência visual
+            ## Cobre Desktop 3.12.0 — diagnóstico de acesso remoto
 
-            - Interface repaginada com navegação lateral, barra inferior do player e tela “Tocando agora”.
-            - Preferências e áudio reorganizados; novo tema claro, fontes locais e janelas atualizadas.
-            - Conta Cobre continua mostrando e permitindo responder aos pedidos de acesso ao Desktop.
-            - Pacote de atualização interno inclui os novos estilos, fontes e arquivos de layout.
+            - Corrige as respostas HTTP da autorização Cobre ID usada pela biblioteca do Mobile.
+            - Permissões expiradas/revogadas, acesso sem escopo e falha de conexão com o Server passam a ser diferenciados.
+            - A resposta de erro não inclui credenciais nem detalhes internos.
 
             Inclui instalador, ZIP portátil, atualização dentro do app e `checksums-sha256.txt`. O atualizador verifica o SHA-256 e mantém backup para recuperação.
 

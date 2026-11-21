@@ -259,7 +259,7 @@ module.exports = function (X) {
       const requiredScope = u.pathname === '/v1/library' || u.pathname.endsWith('/cover') ? 'library.read'
         : u.pathname === '/v1/now-playing' ? 'playback.read' : u.pathname === '/v1/commands' ? 'playback.control' : 'stream';
       grant = await authorizeHostGrant(bearer[1], requiredScope);
-      if (!grant.ok) { const status = grant.status || 401; res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); return res.end(JSON.stringify({ error: status === 403 ? 'forbidden' : status === 503 ? 'authorization_unavailable' : 'invalid_host_grant' })); }
+      if (!grant.ok) { const status = grant.status || 401; const error = grant.code || (status === 403 ? 'forbidden' : status === 503 ? 'authorization_unavailable' : 'invalid_host_grant'); res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); return res.end(JSON.stringify({ error })); }
       const safeMethod = u.pathname === '/v1/commands' ? req.method === 'POST' : req.method === 'GET' || (req.method === 'HEAD' && /^\/v1\/tracks\/\d+\/(?:cover|stream)$/.test(u.pathname));
       if (!safeMethod) { res.writeHead(405, { Allow: u.pathname === '/v1/commands' ? 'POST' : 'GET, HEAD', 'Cache-Control': 'no-store' }); return res.end(); }
     } else if ((u.searchParams.get('k') || ck) !== token) { res.writeHead(401, { 'Content-Type': 'text/plain; charset=utf-8' }); return res.end('Acesso negado. Use o endereço completo mostrado no Cobre.'); }
