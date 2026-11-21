@@ -9,7 +9,7 @@ const OWNER = 'bruncosta077-boop', REPO = 'Cobre';
 const API = `https://api.github.com/repos/${OWNER}/${REPO}/releases/latest`;
 const ASSET = (v) => `Cobre-Update-v${v}-x64.zip`;
 const MAX_BYTES = 80 * 1024 * 1024;
-const ALLOWED = new Set(['account-preload.js','account.html','account-renderer.js','app.asar','byte-range.js','desktop-pairing-qr.js','host-grant-access.js','mini-renderer.js','cobre-id-client.js','cobre-id-main.js','features-main.js','features.js','icon.ico','icon.png','index.html','layout.js','main.js','mini-preload.js','mini.html','package.json','preload.js','remote.html','renderer.js','theme.js','styles/tokens.css','styles/fonts.css','styles/app.css','fonts/bricolage-latin.woff2','fonts/bricolage-latin-ext.woff2','fonts/jetbrains-mono-latin.woff2','fonts/jetbrains-mono-latin-ext.woff2','update-main.js']);
+const ALLOWED = new Set(['account-preload.js','account.html','account-renderer.js','app.asar','byte-range.js','desktop-discovery.js','desktop-pairing-qr.js','host-grant-access.js','mini-renderer.js','cobre-id-client.js','cobre-id-main.js','features-main.js','features.js','icon.ico','icon.png','index.html','layout.js','main.js','mini-preload.js','mini.html','package.json','preload.js','remote.html','renderer.js','theme.js','styles/tokens.css','styles/fonts.css','styles/app.css','fonts/bricolage-latin.woff2','fonts/bricolage-latin-ext.woff2','fonts/jetbrains-mono-latin.woff2','fonts/jetbrains-mono-latin-ext.woff2','update-main.js']);
 const semver = (v) => { const m = /^v?(\d+)\.(\d+)\.(\d+)$/.exec(String(v || '')); return m ? m.slice(1).map(Number) : null; };
 const newer = (a, b) => { for (let i=0;i<3;i++) { if (a[i] !== b[i]) return a[i] > b[i]; } return false; };
 const safeNotes = (s) => String(s || '').slice(0, 24000);
@@ -130,7 +130,7 @@ const EXTRACT_SCRIPT = String.raw`
 param([string]$ZipPath,[string]$OutDir)
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-$allowed=@('account-preload.js','account.html','account-renderer.js','app.asar','byte-range.js','desktop-pairing-qr.js','host-grant-access.js','mini-renderer.js','cobre-id-client.js','cobre-id-main.js','features-main.js','features.js','icon.ico','icon.png','index.html','main.js','mini-preload.js','mini.html','package.json','preload.js','remote.html','renderer.js','update-main.js','styles/tokens.css','styles/fonts.css','styles/app.css','fonts/bricolage-latin.woff2','fonts/bricolage-latin-ext.woff2','fonts/jetbrains-mono-latin.woff2','fonts/jetbrains-mono-latin-ext.woff2','cobre-update.json')
+$allowed=@('account-preload.js','account.html','account-renderer.js','app.asar','byte-range.js','desktop-discovery.js','desktop-pairing-qr.js','host-grant-access.js','mini-renderer.js','cobre-id-client.js','cobre-id-main.js','features-main.js','features.js','icon.ico','icon.png','index.html','main.js','mini-preload.js','mini-renderer.js','mini.html','package.json','preload.js','remote.html','renderer.js','update-main.js','styles/tokens.css','styles/fonts.css','styles/app.css','fonts/bricolage-latin.woff2','fonts/bricolage-latin-ext.woff2','fonts/jetbrains-mono-latin.woff2','fonts/jetbrains-mono-latin-ext.woff2','cobre-update.json')
 if(Test-Path -LiteralPath $OutDir){Remove-Item -LiteralPath $OutDir -Recurse -Force}; New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 $z=[IO.Compression.ZipFile]::OpenRead($ZipPath)
 try {

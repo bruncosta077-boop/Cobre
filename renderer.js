@@ -185,7 +185,7 @@ let lines = [], synced = false, li = -1, tab = 'lib', gs = [];
 let mode = localStorage.mode || 'albums', scope = { artist: null, album: null }, net = localStorage.net !== '0';
 const cur = () => q[pos];
 let revs = {}, rvTimer, rvOpen = false;
-let VERSION = '3.12.2';
+let VERSION = '3.13.0';
 api.version().then((version) => { if (/^\d+\.\d+\.\d+(?:[-+][\w.-]+)?$/.test(version)) VERSION = version; }).catch(() => {});
 const rk = (g) => g.artist + '|' + g.album;
 const saveRevs = () => api.revSave(revs);

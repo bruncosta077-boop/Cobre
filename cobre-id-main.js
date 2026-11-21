@@ -40,14 +40,14 @@ function init(c) {
     catch (e) { link = { ok: false, text: e.code === 'network' ? 'Sem conexão com o servidor' : e.message }; }
     push();
   };
-  const startBeat = () => { stopBeat(); beat(); hb = setInterval(beat, 20000); };
+  const startBeat = () => { c.remoteIdentityChanged?.(); stopBeat(); beat(); hb = setInterval(beat, 20000); };
   const stopBeat = () => { if (hb) clearInterval(hb); hb = null; };
 
   const wrap = (fn) => async (_e, ...a) => { try { return { ok: true, data: await fn(...a) }; } catch (e) { return { ok: false, code: e.code || 'error', error: e.message }; } };
   ipcMain.handle('cid:status', wrap(async () => ({ ...make().info, link, defaultServer: defaultServer() })));
   ipcMain.on('cid:open', () => open());
   ipcMain.handle('cid:login', wrap(async (d) => { const i = await make().signIn(d); startBeat(); return i; }));
-  ipcMain.handle('cid:logout', wrap(async () => { stopBeat(); await make().signOut(); link = { ok: false, text: 'Sem conta conectada' }; }));
+  ipcMain.handle('cid:logout', wrap(async () => { stopBeat(); await make().signOut(); c.remoteIdentityChanged?.(); link = { ok: false, text: 'Sem conta conectada' }; }));
   ipcMain.handle('cid:devices', wrap(() => make().devices()));
   ipcMain.handle('cid:hostRequests', wrap(() => make().hostAccessRequests()));
   ipcMain.handle('cid:hostApprove', wrap((requestId) => make().approveHostAccess(requestId)));

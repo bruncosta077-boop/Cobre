@@ -1,5 +1,13 @@
 # Histórico de versões — Cobre Desktop
 
+## 3.13.0 — descoberta local para Mobile e TV
+
+- Com o acesso remoto ativo e o Cobre ID conectado, o Desktop anuncia seu identificador e as versões de protocolo por mDNS na rede local.
+- O anúncio não inclui endereço de acesso, token, chave LAN, conta ou senha. Mobile/TV ainda pedem uma concessão pelo Cobre Server e o Desktop precisa aprovar o aparelho.
+- O anúncio é removido ao desligar o acesso remoto, sair da conta ou encerrar o aplicativo; falhas do mDNS não interrompem o servidor LAN existente.
+- O Server continua coordenando conta e autorização; o áudio segue diretamente do Desktop para o cliente.
+- `npm test` passou (13 testes); build e publicação ainda precisam ser concluídos no GitHub Actions.
+
 ## 3.12.2 — versão exibida pelo próprio aplicativo
 
 - A tela Sobre, o rodapé das configurações e o diagnóstico agora consultam a versão real do executável Electron, eliminando divergência entre o programa instalado e o número mostrado na interface.

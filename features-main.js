@@ -1,7 +1,9 @@
 // Cobre 3.0 (processo principal): capas melhores, descobrir, Last.fm, IA, mini player, acesso remoto
 const http = require('http'), os = require('os');
+const Bonjour = require('bonjour-service');
 const QRCode = require('qrcode');
 const { createDesktopPairingUri } = require('./desktop-pairing-qr');
+const { createDiscoveryService } = require('./desktop-discovery');
 const { pipeline } = require('stream');
 const parseByteRange = require('./byte-range');
 const { createHostGrantAuthorizer } = require('./host-grant-access');
@@ -246,6 +248,28 @@ module.exports = function (X) {
   // ---------- acesso remoto (celular e TV pelo navegador)
   const MIME = { '.mp3': 'audio/mpeg', '.flac': 'audio/flac', '.wav': 'audio/wav', '.ogg': 'audio/ogg', '.m4a': 'audio/mp4', '.aac': 'audio/aac', '.opus': 'audio/ogg' };
   let srv = null, rt = { m: 0, v: [] }, np = {};
+  let bonjour = null, discoveryService = null, discoveryRetryTimer = null;
+  function stopDiscovery() {
+    if (discoveryRetryTimer) { clearTimeout(discoveryRetryTimer); discoveryRetryTimer = null; }
+    if (discoveryService) { try { discoveryService.stop(); } catch {} discoveryService = null; }
+  }
+  function retryDiscovery() {
+    if (discoveryRetryTimer || !srv) return;
+    discoveryRetryTimer = setTimeout(() => { discoveryRetryTimer = null; refreshDiscovery(); }, 30_000);
+  }
+  function refreshDiscovery() {
+    stopDiscovery();
+    if (!srv) return false;
+    const hostId = String(readJ('cobre-id.json', {}).deviceId || '');
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(hostId)) { retryDiscovery(); return false; }
+    try {
+      bonjour ||= new Bonjour({ disableIPv6: true }, () => {});
+      const service = bonjour.publish(createDiscoveryService(hostId, 8787));
+      discoveryService = service;
+      service.on('error', () => { if (discoveryService === service) { stopDiscovery(); retryDiscovery(); } });
+      return true;
+    } catch { stopDiscovery(); retryDiscovery(); return false; }
+  }
   ipcMain.on('npState', (_e, s) => { np = s || {}; });
   const rcache = new Map();
   const rtracks = () => { try { const st = fs.statSync(LIB()); if (st.mtimeMs !== rt.m) rt = { m: st.mtimeMs, v: JSON.parse(fs.readFileSync(LIB(), 'utf8')).tracks || [] }; } catch {} return rt.v; };
@@ -342,10 +366,11 @@ module.exports = function (X) {
     if (!st.token) { st.token = crypto.randomBytes(9).toString('hex'); }
     st.on = true; writeJ('remote.json', st);
     srv = http.createServer((req, res) => { handle(req, res, st.token).catch(() => { try { res.writeHead(500); res.end(); } catch {} }); });
-    srv.on('error', () => { srv = null; });
+    srv.on('error', () => { srv = null; stopDiscovery(); });
+    srv.on('listening', refreshDiscovery);
     srv.listen(8787, '0.0.0.0');
   }
-  function stopRemote() { if (srv) { srv.close(); srv = null; } writeJ('remote.json', { ...readJ('remote.json', {}), on: false }); }
+  function stopRemote() { if (srv) { srv.close(); srv = null; } stopDiscovery(); writeJ('remote.json', { ...readJ('remote.json', {}), on: false }); }
   const lanIp = () => {
     const all = [].concat(...Object.values(os.networkInterfaces())).filter((i) => i.family === 'IPv4' && !i.internal);
     const privateIp = (address) => /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.)/.test(address);
@@ -498,5 +523,6 @@ module.exports = function (X) {
     } catch { return null; }
   });
   app.whenReady().then(() => { if (readJ('remote.json', {}).on) startRemote(); });
-  return { isRemoteActive: () => Boolean(srv) };
+  app.on('before-quit', () => { stopDiscovery(); if (bonjour) { try { bonjour.destroy(); } catch {} bonjour = null; } });
+  return { isRemoteActive: () => Boolean(srv), refreshDiscovery };
 };

@@ -17,6 +17,7 @@ test('update manifest allows only the packaged styles and font assets', () => {
     'styles/tokens.css',
     'styles/fonts.css',
     'styles/app.css',
+    'desktop-discovery.js',
     'node_modules/qrcode/lib/index.js',
   ]) assert.equal(validRelative(file), true, file);
   for (const file of ['fonts/unlisted.woff2', 'styles/extra.css', '../fonts/a.woff2', 'styles/../main.js']) {

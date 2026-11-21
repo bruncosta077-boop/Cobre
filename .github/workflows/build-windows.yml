@@ -77,10 +77,11 @@ jobs:
         with:
           name: Cobre Desktop ${{ github.ref_name }}
           body: |
-            ## Cobre Desktop 3.12.2 — versão exibida pelo próprio aplicativo
+            ## Cobre Desktop 3.13.0 — descoberta local do Mobile e da TV
 
-            - Corrige o número da versão no Sobre, no rodapé das configurações e no diagnóstico, consultando o executável instalado.
-            - Mantém as correções do atualizador interno incluídas na versão 3.12.1.
+            - Anuncia o Desktop na rede local quando o acesso remoto e Cobre ID estão ativos, permitindo ao Mobile e à TV localizá-lo sem digitar endereço.
+            - O anúncio contém somente identidade e versão do protocolo; acesso continua exigindo concessão Cobre ID e aprovação no Desktop.
+            - O áudio continua sendo transmitido diretamente do Desktop para o aparelho.
 
             Inclui instalador, ZIP portátil, atualização dentro do app e `checksums-sha256.txt`. O atualizador verifica o SHA-256 e mantém backup para recuperação.
 

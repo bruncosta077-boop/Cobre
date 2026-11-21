@@ -1,5 +1,14 @@
 # Registro de trabalho — Cobre Desktop
 
+## 2026-11-21 — descoberta mDNS 3.13.0
+
+- Adicionado anúncio `_cobre._tcp` durante o servidor LAN ativo e somente com identidade Cobre ID válida. O anúncio inclui UUID do Desktop e versões, nunca credenciais ou tokens.
+- O anúncio para ao desativar acesso remoto, sair da conta ou encerrar o app. Problemas de mDNS são isolados e não devem interromper a API local.
+- Mobile/TV continuam passando pela autorização Cobre ID e aprovação local; a mídia não passa pelo Server.
+- `npm test`: 13 testes passaram; `npm audit --audit-level=moderate` reportou zero vulnerabilidades conhecidas. `npm run dist` gerou instalador e ZIP portável localmente (sem assinatura digital de código).
+- O pacote interno `Cobre-Update-v3.13.0-x64.zip` foi gerado com 2,57 MiB; conferi que contém `desktop-discovery.js` e que o extrator o permite apenas pela lista segura existente. SHA-256 local: `dbde07db5fa8635dc99c0be2980fb708685e17a995e9564ce83b50a51260733b`.
+- Descoberta em roteadores/aparelhos físicos ainda precisa de validação pelo usuário; CI do GitHub deve reconstruir e verificar os pacotes da publicação.
+
 ## 2026-11-20 — versão 3.6.0
 
 - Ativado `webSecurity` na janela principal, no mini player e na conta Cobre ID. A interface local usa `cobre://app/` com lista explícita de páginas, CSP (`script-src 'self'`), bloqueio de navegação/popup e media local por identificadores temporários. Scripts inline do mini player e da conta foram movidos para arquivos locais.

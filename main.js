@@ -543,7 +543,7 @@ app.on('will-quit', () => globalShortcut.unregisterAll());
 app.on('window-all-closed', () => app.quit());
 
 let cobreFeatures = {}, cobreIdentity = {};
-try { cobreIdentity = require('./cobre-id-main').init({ app, ipcMain, BrowserWindow, safeStorage, version: app.getVersion(), remoteHostActive: () => Boolean(cobreFeatures.isRemoteActive?.()) }) || {}; } catch (e) { console.error('cobre-id', e); }
+try { cobreIdentity = require('./cobre-id-main').init({ app, ipcMain, BrowserWindow, safeStorage, version: app.getVersion(), remoteHostActive: () => Boolean(cobreFeatures.isRemoteActive?.()), remoteIdentityChanged: () => cobreFeatures.refreshDiscovery?.() }) || {}; } catch (e) { console.error('cobre-id', e); }
 try {
   cobreFeatures = require('./features-main')({ app, ipcMain, BrowserWindow, dialog, clipboard, nativeImage, screen, path, fs, crypto, mm, pathToFileURL, getWin: () => win, authorizeHostGrant: (token) => cobreIdentity.validateHostGrant?.(token), H: { curCover, ckey, customOf, clearCustom, CDIR, UA, queued, wait, LIB, mediaUrl } }) || {};
 } catch (e) { console.error('features-main', e); }
