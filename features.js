@@ -13,80 +13,7 @@ const bonusHide = (() => { try { return JSON.parse(localStorage.bhide || '{}'); 
 const AUTOB = /\bbonus track\b|[\(\[][^\)\]]*\b(bonus|bônus|demo|live|ao vivo|remix|alternat\w*|outtake|rehearsal|session|acoustic|instrumental|radio edit)\b[^\)\]]*[\)\]]/i;
 const isBonus = (t) => (bonusMap[t.path] !== undefined ? bonusMap[t.path] : AUTOB.test(t.title || ''));
 
-FXH('css', () => {
-  document.head.insertAdjacentHTML('beforeend', `<style>
-header{flex-wrap:wrap;row-gap:6px}
-header>button,header>.sw,header>select{flex:none}
-header>button:not(.tab){width:36px;height:36px;padding:0}
-.ic button,.ctl button:not(#play){width:36px;height:36px;padding:0}
-.ibtn{width:30px;height:30px;padding:0}
-#clk{margin-left:8px;color:var(--mu);font-size:12px;white-space:nowrap}
-#clk b{color:var(--tx);font-weight:600}
-#cclk{display:none}
-.cin #cclk{display:block;position:fixed;top:22px;left:26px;color:var(--mu);z-index:14;transition:opacity .5s}
-.cin.idle #cclk{opacity:.85}
-.noclk #clk,.noclk #cclk{display:none!important}
-.cin #nx{grid-row:4;grid-column:1/3;text-align:left}
-.cin #left{grid-row:4;grid-column:3;text-align:right}
-.lk{color:inherit;cursor:pointer;text-decoration:none}
-.lk:hover{color:var(--cu);text-decoration:underline}
-#wave{width:100%;height:44px;cursor:pointer;display:block}
-#cdc{display:block;margin:0 auto 4px;cursor:pointer}
-.pick{outline:1px solid var(--tr);border-radius:8px;padding:6px;margin:-6px}
-.ghost{opacity:.38;filter:grayscale(.5);cursor:pointer}
-.ghost:hover{opacity:.75}
-#cvv{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;display:block}
-.cin #cvv{height:100%;width:auto}
-body.cvvon #cover{display:none}
-.intools{display:none!important}
-#clk{font-size:11px;margin-left:6px}
-.cin #vzb{display:none}
-.cin #cclk{font-size:13px;top:22px;left:26px;right:auto;text-align:left;background:rgba(10,9,8,.55);padding:6px 10px;border-radius:8px;z-index:16}
-.picks-note{color:var(--mu);padding:0 4px}
-.card.pick{grid-column:span 2;display:flex;gap:18px;align-items:center;padding:14px;margin:0}
-.card.pick .cv{width:150px;flex:none}
-.card.pick .pk{min-width:0}
-.card.pick h2{margin:2px 0;font-size:18px}
-.cgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.cc{border:2px solid transparent;border-radius:8px;padding:4px;cursor:pointer}
-.cc.on{border-color:var(--cu)}
-.cc img{width:100%;border-radius:6px;display:block}
-.cc span,.cc i,.cc em{display:block;font-size:11px;font-style:normal;color:var(--mu)}
-.wab{display:inline-flex;align-items:center;gap:6px}
-#clk{display:none}
-.fs #clk{display:inline}
-.qh{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 14px;margin:8px 0 14px;background:var(--pn);border:1px solid var(--ln);border-radius:10px}
-.qh-info{display:flex;flex-direction:column;gap:2px;min-width:130px}
-.qh-info b{font-size:14px;color:var(--tx)}
-.qh-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.qh-actions .lnk{display:inline-flex;align-items:center;justify-content:center;padding:7px 12px;border-radius:8px;border:1px solid var(--tr);white-space:nowrap}
-.qh-actions .queue-save{background:linear-gradient(135deg,var(--cu),var(--cu2));border-color:transparent;color:var(--bg)}
-.qh-actions .queue-clear{color:var(--mu)}
-.qh-actions .queue-clear:hover{border-color:#b3402e;color:#e07b6a}
-#queue .row{grid-template-columns:30px 1fr 1fr 96px 44px 34px}
-@media (max-width:900px){#queue .row{grid-template-columns:30px 1fr 96px 44px 34px}}
-#queue .row[draggable=true]{cursor:grab}
-.qx{opacity:.5}
-.qx:hover{opacity:1}
-#enc{position:fixed;inset:0;z-index:30;background:rgba(8,7,6,.85);display:grid;place-items:center}
-.encb{position:relative;width:min(1000px,94vw);height:min(640px,90vh);background:linear-gradient(135deg,#221c17,#171310);border:1px solid var(--ln);border-radius:6px;display:grid;grid-template-columns:1fr 1fr;box-shadow:0 20px 60px rgba(0,0,0,.6)}
-.encb::after{content:'';position:absolute;left:50%;top:0;bottom:0;width:18px;transform:translateX(-50%);background:linear-gradient(90deg,transparent,rgba(0,0,0,.35),transparent);pointer-events:none}
-.encp{padding:28px 32px 48px;overflow:auto;font-family:Georgia,"Times New Roman",serif;color:#e4d9c8;min-height:0}
-.encp h2{margin:12px 0 4px;font-size:26px}
-.encp h3{margin:16px 0 6px;font-size:13px;color:var(--cu);font-weight:600}
-.enc-edition-label{display:block;margin:8px 0;color:var(--mu);font:12px system-ui,sans-serif}
-.enc-select{display:block;width:100%;margin-top:5px;padding:8px 10px;border:1px solid var(--ln);border-radius:7px;background:var(--bg);color:var(--tx);font:12px system-ui,sans-serif}
-.enc-refresh{display:inline-flex;margin:4px 0 8px;padding:6px 9px;border:1px solid var(--ln);border-radius:7px;color:var(--mu);font:12px system-ui,sans-serif;cursor:pointer}
-.enc-refresh:hover{border-color:var(--cu);color:var(--tx)}
-.enc-meta,.enc-source{font:12px/1.5 system-ui,sans-serif;color:var(--mu);margin:5px 0}
-.encp p{margin:2px 0;color:#a39684}
-.encp .tk{display:flex;gap:10px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer}
-.encp .tk span:last-child{margin-left:auto;color:#a39684}
-.encp img{width:100%;max-height:62%;object-fit:contain;border-radius:3px;box-shadow:0 8px 24px rgba(0,0,0,.5);display:block}
-.encn{position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:14px;align-items:center;color:var(--mu)}
-#encx{position:absolute;top:10px;right:10px;z-index:2}
-</style>`);
-});
+// O CSS destes recursos agora fica em styles/app.css.
 FXH('symbols', () => {
   document.querySelector('svg defs').insertAdjacentHTML('beforeend', `
 <symbol id="i-ai" viewBox="0 0 24 24"><path class="st" d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/></symbol>
@@ -293,7 +220,7 @@ function drawTubes() {
   c.strokeStyle = TB.on ? A : '#6a5a42'; c.lineWidth = 3; c.lineCap = 'round';
   c.beginPath(); c.arc(W / 2, H * 0.83, s * 0.035, -Math.PI * 0.35, Math.PI * 1.35); c.stroke();
   c.beginPath(); c.moveTo(W / 2, H * 0.83 - s * 0.045); c.lineTo(W / 2, H * 0.83 - s * 0.005); c.stroke(); c.lineCap = 'butt';
-  c.fillStyle = '#c9c1b8'; c.textAlign = 'center'; c.font = Math.round(s * 0.04) + 'px "Segoe UI", sans-serif';
+  c.fillStyle = '#c9c1b8'; c.textAlign = 'center'; c.font = Math.round(s * 0.04) + 'px "Bricolage Grotesque", "Segoe UI", sans-serif';
   c.fillText(TB.on ? (TB.warm < 0.99 ? `Aquecendo… ${Math.ceil((1 - TB.warm) * 10)} s` : 'Válvulas quentes') : TB.warm > 0.02 ? 'Esfriando…' : 'Desligado · clique para ligar', W / 2, H * 0.93);
 }
 FXH('tube', () => {
@@ -383,11 +310,11 @@ async function renderDiscover() {
   show(); $('#sort').style.display = 'none'; $('#rank').hidden = true; $('#bk').hidden = true; $('#ghost').hidden = true;
   const g = $('#grid');
   g.hidden = false;
-  if (!lib.length) { g.innerHTML = '<p class="empty" style="margin:30px 10px">Escolha uma pasta de músicas primeiro.</p>'; return; }
+  if (!lib.length) { g.innerHTML = '<p class="empty">Escolha uma pasta de músicas primeiro.</p>'; return; }
   const sd = discoverSeeds();
-  if (sd.seeds.length < 2) { g.innerHTML = '<p class="empty" style="margin:30px 10px">Ouça ou avalie (3★ ou mais) mais álbuns para eu entender o seu gosto e recomendar com cuidado.</p>'; return; }
+  if (sd.seeds.length < 2) { g.innerHTML = '<p class="empty">Ouça ou avalie (3★ ou mais) mais álbuns para eu entender o seu gosto e recomendar com cuidado.</p>'; return; }
   if (!disc || Date.now() - disc.t > 3 * 864e5) {
-    g.innerHTML = '<p class="empty" style="margin:30px 10px">Procurando recomendações parecidas com o que você mais ouve… pode levar cerca de um minuto.</p>';
+    g.innerHTML = '<p class="empty">Procurando recomendações parecidas com o que você mais ouve… pode levar cerca de um minuto.</p>';
     disc = { t: Date.now(), items: (await api.ipc.invoke('discover', sd)) || [] };
   }
   if (mode !== 'discover') return;
@@ -395,7 +322,7 @@ async function renderDiscover() {
   discItems = disc.items.filter((x) => !own.has(n2(x.artist) + '|' + n2(x.title))).slice(0, 80);
   g.innerHTML = discItems.length
     ? discItems.map((x, i) => `<div class="card" data-dc="${i}"><div class="cv" style="background-image:url('${x.cover}')"></div><b>${esc(x.title)}</b><i>${esc(x.artist)}${x.year ? ' · ' + x.year : ''}</i><span class="why">${esc(x.why)}</span></div>`).join('')
-    : '<p class="empty" style="margin:30px 10px">Não encontrei recomendações agora. Tente de novo mais tarde.</p>';
+    : '<p class="empty">Não encontrei recomendações agora. Tente de novo mais tarde.</p>';
 }
 function renderPicks() {
   show(); $('#sort').style.display = 'none'; $('#rank').hidden = true; $('#bk').hidden = true; $('#ghost').hidden = true;
@@ -404,8 +331,8 @@ function renderPicks() {
   const day = pickAlbum(localDate(), null), month = pickAlbum(localDate().slice(0, 7) + 'm', day), L = [['day', day, 'Indicação do dia'], ['month', month, 'Indicação do mês']].filter(([, x]) => x);
   picksMap = { day, month };
   g.innerHTML = L.length
-    ? L.map(([k, x, l]) => `<div class="card pick" data-pick="${k}"><div class="cv"></div><div class="pk"><span class="why">${l}</span><h2>${esc(x.album)}</h2><p class="mu" style="margin:0">${esc(x.artist)}${x.year ? ' · ' + x.year : ''} · ${x.tracks.length} faixas</p><button class="playb" data-pickplay="${k}" title="Tocar" aria-label="Tocar" style="margin-top:10px"><svg><use href="#i-play"/></svg></button></div></div>`).join('') + '<p class="picks-note" style="grid-column:1/-1">Uma sugestão nova por dia e outra por mês, escolhidas entre os seus álbuns bem avaliados e os que você ouve pouco.</p>'
-    : '<p class="empty" style="margin:30px 10px">Escolha uma pasta de músicas primeiro.</p>';
+    ? L.map(([k, x, l]) => `<div class="card pick" data-pick="${k}"><div class="cv"></div><div class="pk"><span class="why">${l}</span><h2>${esc(x.album)}</h2><p class="mu">${esc(x.artist)}${x.year ? ' · ' + x.year : ''} · ${x.tracks.length} faixas</p><button class="playb" data-pickplay="${k}" title="Tocar" aria-label="Tocar"><svg><use href="#i-play"/></svg></button></div></div>`).join('') + '<p class="picks-note">Uma sugestão nova por dia e outra por mês, escolhidas entre os seus álbuns bem avaliados e os que você ouve pouco.</p>'
+    : '<p class="empty">Escolha uma pasta de músicas primeiro.</p>';
   g.querySelectorAll('.pick .cv').forEach((el, i) => { el._t = L[i][1].tracks[0]; lazy.observe(el); });
 }
 const _render = render;
@@ -459,16 +386,16 @@ async function shareDlg(g) {
   x.save(); x.beginPath(); x.roundRect(100, 110, 880, 880, 28); x.clip();
   if (bmp) x.drawImage(bmp, 100, 110, 880, 880); else { x.fillStyle = A; x.fillRect(100, 110, 880, 880); }
   x.restore();
-  const fit = (txt, maxW, size, weight) => { let s = size; do { x.font = `${weight} ${s}px "Segoe UI", sans-serif`; s -= 2; } while (x.measureText(txt).width > maxW && s > 20); };
+  const fit = (txt, maxW, size, weight) => { let s = size; do { x.font = `${weight} ${s}px "Bricolage Grotesque", "Segoe UI", sans-serif`; s -= 2; } while (x.measureText(txt).width > maxW && s > 20); };
   x.textAlign = 'center'; x.fillStyle = '#ece6df'; fit(g.album, 880, 60, '700'); x.fillText(g.album, 540, 1070);
   const sub = g.artist + (g.year ? ' · ' + g.year : '');
   x.fillStyle = '#8d847b'; fit(sub, 880, 40, '400'); x.fillText(sub, 540, 1130);
-  x.font = '64px "Segoe UI", sans-serif';
+  x.font = '64px "Bricolage Grotesque", "Segoe UI", sans-serif';
   for (let i = 0; i < 5; i++) { x.fillStyle = i < st ? A : '#3a3430'; x.fillText('★', 540 + (i - 2) * 76, 1225); }
   drawLogo(x, 540, 1295, 64, A);
   c.style.cssText = 'width:100%;border-radius:8px';
   const txt = `Estou ouvindo ${g.album} — ${g.artist}${st ? ' (minha nota: ' + '★'.repeat(st) + ')' : ''} · Cobre`;
-  const p = dlg({ title: 'Compartilhar', html: `<div style="display:flex;align-items:center;gap:8px">${LOGO_SVG}<span class="mu">Cobre</span></div><div id="shw"></div><div class="pr"><button class="lnk wab" id="shc">Copiar imagem</button><button class="lnk wab" id="shs">Salvar imagem</button><button class="lnk wab" id="shz">${WA_SVG} WhatsApp</button></div><p class="mu">WhatsApp: o botão copia a imagem e abre o WhatsApp. Na conversa, cole com Ctrl+V (o WhatsApp não deixa programas anexarem a imagem sozinhos). Instagram: salve a imagem e publique pelo celular ou pelo site.</p>`, buttons: [{ label: 'Fechar', v: true }] });
+  const p = dlg({ title: 'Compartilhar', html: `<div class="brand-row">${LOGO_SVG}<span class="mu">Cobre</span></div><div id="shw"></div><div class="pr"><button class="lnk wab" id="shc">Copiar imagem</button><button class="lnk wab" id="shs">Salvar imagem</button><button class="lnk wab" id="shz">${WA_SVG} WhatsApp</button></div><p class="mu">WhatsApp: o botão copia a imagem e abre o WhatsApp. Na conversa, cole com Ctrl+V (o WhatsApp não deixa programas anexarem a imagem sozinhos). Instagram: salve a imagem e publique pelo celular ou pelo site.</p>`, buttons: [{ label: 'Fechar', v: true }] });
   $('#shw').appendChild(c);
   const blob = () => new Promise((r) => c.toBlob(r, 'image/png')), copy = async () => { const bl = await blob(); try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': bl })]); } catch { await api.ipc.invoke('copyImage', new Uint8Array(await bl.arrayBuffer())); } };
   $('#shc').onclick = async () => { await copy(); toast('Imagem copiada'); };
@@ -523,7 +450,7 @@ async function lfDlg() {
 async function aiDlg() {
   const st = await api.ipc.invoke('settingsGet');
   const html = (st.hasAiKey ? '' : '<label>Chave de API da Anthropic<input id="aik" type="password" placeholder="sk-ant-..."></label><p class="mu">Crie em console.anthropic.com. A chave fica só neste computador, e o uso é cobrado de você pela Anthropic.</p>') +
-    '<label>O que você quer ouvir?<textarea id="aip" rows="3" placeholder="Ex.: algo calmo para estudar, ou rock dos anos 80 que eu ouço pouco" style="background:var(--bg);border:1px solid var(--ln);border-radius:6px;padding:8px;color:var(--tx);font:inherit"></textarea></label><p class="mu">Para escolher, são enviados à Anthropic só artistas, álbuns, ano, gênero, suas notas e quantas vezes você ouviu. Nenhum arquivo de áudio.</p>';
+    '<label>O que você quer ouvir?<textarea id="aip" rows="3" placeholder="Ex.: algo calmo para estudar, ou rock dos anos 80 que eu ouço pouco"></textarea></label><p class="mu">Para escolher, são enviados à Anthropic só artistas, álbuns, ano, gênero, suas notas e quantas vezes você ouviu. Nenhum arquivo de áudio.</p>';
   const r = await dlg({ title: 'Assistente do Cobre', html, read: () => ({ key: $('#aik') ? $('#aik').value.trim() : '', prompt: $('#aip').value.trim() }), buttons: [{ label: 'Cancelar', v: false }, { label: 'Montar playlist', v: true }] });
   if (!r.v || !r.data.prompt) return;
   if (r.data.key) await api.ipc.invoke('settingsSet', { aiKey: r.data.key });
@@ -550,8 +477,8 @@ async function remoteDlg() {
   let pairing = null, pairingError = '';
   if (s.on) { try { pairing = await api.ipc.invoke('remotePairingQr'); } catch (e) { pairingError = e.message || 'Entre no Cobre ID para gerar o QR.'; } }
   const html = s.on
-    ? `<p style="color:var(--tx)">Aponte o Cobre Mobile para este QR na mesma rede Wi-Fi. Ele identifica este Desktop e inicia um pedido seguro pelo Cobre ID; aprove no computador.</p>${pairing ? `<div style="text-align:center;padding:8px"><img alt="QR de pareamento Cobre" src="${pairing.dataUrl}" style="width:220px;height:220px;background:white;padding:8px;border-radius:8px"><div class="mu" style="margin-top:6px">QR válido por 5 minutos · sem senha ou token</div></div>` : `<p class="mu">${esc(pairingError)}</p>`}<label class="mu">Endereço local para conexão direta</label><input id="rurl" readonly value="${esc(s.url)}"><p class="mu">O QR contém apenas o endereço local e a identidade deste Desktop. A chave de acesso é emitida pelo Cobre ID após sua aprovação e enviada no cabeçalho de autorização. A conexão de áudio continua restrita à rede local.</p>`
-    : '<p style="color:var(--tx)">Liga um servidor no seu PC para você ouvir a biblioteca no celular ou na TV, pelo navegador, sem baixar as músicas.</p><p class="mu">Funciona em redes privadas. Arquivos ALAC (.m4a sem perdas) podem não tocar em alguns aparelhos.</p>';
+    ? `<p class="hl">Aponte o Cobre Mobile para este QR na mesma rede Wi-Fi. Ele identifica este Desktop e inicia um pedido seguro pelo Cobre ID; aprove no computador.</p>${pairing ? `<div class="qr-box"><img alt="QR de pareamento Cobre" src="${pairing.dataUrl}"><div class="mu">QR válido por 5 minutos · sem senha ou token</div></div>` : `<p class="mu">${esc(pairingError)}</p>`}<label class="mu">Endereço local para conexão direta</label><input id="rurl" readonly value="${esc(s.url)}"><p class="mu">O QR contém apenas o endereço local e a identidade deste Desktop. A chave de acesso é emitida pelo Cobre ID após sua aprovação e enviada no cabeçalho de autorização. A conexão de áudio continua restrita à rede local.</p>`
+    : '<p class="hl">Liga um servidor no seu PC para você ouvir a biblioteca no celular ou na TV, pelo navegador, sem baixar as músicas.</p><p class="mu">Funciona em redes privadas. Arquivos ALAC (.m4a sem perdas) podem não tocar em alguns aparelhos.</p>';
   setTimeout(() => { if ($('#rurl')) $('#rurl').select(); }, 60);
   const r = await dlg({ title: 'Acesso remoto', html, buttons: s.on ? [{ label: 'Fechar', v: false }, ...(pairing ? [{ label: 'Novo QR', v: 'qr' }] : []), { label: 'Desligar', v: 'off', danger: true }] : [{ label: 'Agora não', v: false }, { label: 'Ligar', v: 'on' }] });
   if (r.v === 'on' || r.v === 'off') { await api.ipc.invoke('remoteSet', r.v === 'on'); if (r.v === 'on') remoteDlg(); else toast('Acesso remoto desligado'); }
@@ -572,14 +499,14 @@ FXH('gear', () => {
   const _gh = gearHtml;
   gearHtml = function () {
     const h = _gh(), i = h.indexOf('<div class="pr"><button class="lnk" data-act="rescan">'), j = h.lastIndexOf('<p class="mu">Versão');
-    const settings = `<p class="mu" style="margin-top:6px">Barra de tempo</p><select id="skst">${opts([['line', 'Linha'], ['wave', 'Onda'], ['disc', 'Disco']], seekStyle)}</select><label class="net"><input type="checkbox" id="clkc"${localStorage.clk !== '0' ? ' checked' : ''}> Mostrar relógio (em tela cheia)</label><label class="net"><input type="checkbox" id="vu2c"${localStorage.vu2 === '1' ? ' checked' : ''}> Incluir o VU clássico nos visuais</label>`;
+    const settings = `<p class="mu">Barra de tempo</p><select id="skst">${opts([['line', 'Linha'], ['wave', 'Onda'], ['disc', 'Disco']], seekStyle)}</select><label class="net"><input type="checkbox" id="clkc"${localStorage.clk !== '0' ? ' checked' : ''}> Mostrar relógio (em tela cheia)</label><label class="net"><input type="checkbox" id="vu2c"${localStorage.vu2 === '1' ? ' checked' : ''}> Incluir o VU clássico nos visuais</label>`;
     const btns = '<div class="pr"><button class="lnk" data-act="remote">Acesso remoto…</button><button class="lnk" data-act="lastfm">Last.fm…</button><button class="lnk" data-act="covreset">Restaurar capas…</button></div>';
     if (i < 0 || j < 0) return h + settings + btns;
     return h.slice(0, i) + settings + h.slice(i, j) + btns + h.slice(j);
   };
   const _fxh = fxHtml;
   fxHtml = function () {
-    return _fxh() + `<p class="ph" style="margin-top:6px">Valvulado</p><label class="net"><input type="checkbox" id="tbon"${TB.on ? ' checked' : ''}> Ligar válvulas (aquecem em 10 s)</label><p class="mu">Calor (equalização suave, sem distorção)</p><input type="range" id="tbdr" min="0" max="1" step="0.01" value="${TB.drive}"><p class="mu">Escolha o visual Válvulas para ver o aquecimento.</p>`;
+    return _fxh() + `<p class="ph sub-title">Valvulado</p><label class="net"><input type="checkbox" id="tbon"${TB.on ? ' checked' : ''}> Ligar válvulas (aquecem em 10 s)</label><p class="mu">Calor (equalização suave, sem distorção)</p><input type="range" id="tbdr" min="0" max="1" step="0.01" value="${TB.drive}"><p class="mu">Escolha o visual Válvulas para ver o aquecimento.</p>`;
   };
   const pc = $('#pop').onclick, po = $('#pop').onchange, pi = $('#pop').oninput;
   $('#pop').onclick = (e) => {
@@ -616,14 +543,14 @@ async function updateDlg() {
   if(!d.updateAvailable) return dlg({title:'Cobre atualizado',text:d.current===d.version?`Você está usando a versão mais recente (${d.current}).`:`Não há atualização pública posterior. Esta cópia (${d.current}) está mais nova que a última versão publicada (${d.version}).`,buttons:[{label:'Fechar',v:true}]});
   const notes=esc(d.notes||'Esta versão não publicou notas de atualização.').slice(0,24000);
   if(!d.supported) return dlg({title:'Atualização não disponível nesta edição',text:'A atualização direta funciona na edição portátil descompactada do Cobre. Baixe e instale a edição atualizada pelo canal de distribuição.',buttons:[{label:'Fechar',v:true}]});
-  if(!d.packageAvailable) return dlg({title:`Cobre ${d.version} disponível`,html:`<p>Esta versão foi publicada, mas ainda não tem o pacote de atualização interna.</p><p class="mu">Por enquanto, atualize pelo pacote completo. Quando o ZIP de atualização for anexado à release, o Cobre poderá instalá-lo diretamente aqui.</p><div style="max-height:220px;overflow:auto;white-space:pre-wrap;padding:10px;border:1px solid var(--ln);border-radius:8px">${notes}</div>`,buttons:[{label:'Fechar',v:true}]});
-  const choice=await dlg({title:`Atualização ${d.version}`,html:`<p>Versão atual: ${d.current} · Download: ${(d.size/1048576).toFixed(1)} MB</p><p class="mu">Notas da versão</p><div style="max-height:240px;overflow:auto;white-space:pre-wrap;padding:10px;border:1px solid var(--ln);border-radius:8px">${notes}</div>`,buttons:[{label:'Agora não',v:false},{label:'Baixar atualização',v:'download'}]});
+  if(!d.packageAvailable) return dlg({title:`Cobre ${d.version} disponível`,html:`<p>Esta versão foi publicada, mas ainda não tem o pacote de atualização interna.</p><p class="mu">Por enquanto, atualize pelo pacote completo. Quando o ZIP de atualização for anexado à release, o Cobre poderá instalá-lo diretamente aqui.</p><div class="notes">${notes}</div>`,buttons:[{label:'Fechar',v:true}]});
+  const choice=await dlg({title:`Atualização ${d.version}`,html:`<p>Versão atual: ${d.current} · Download: ${(d.size/1048576).toFixed(1)} MB</p><p class="mu">Notas da versão</p><div class="notes">${notes}</div>`,buttons:[{label:'Agora não',v:false},{label:'Baixar atualização',v:'download'}]});
   if(choice.v!=='download') return;
   updateBusy=true; toast('Preparando download da atualização…',true);
   const downloaded=await api.ipc.invoke('cobreUpdateDownload',d.version).catch((e)=>({ok:false,error:String(e.message||e)}));
   updateBusy=false; $('#toast').hidden=true;
   if(!downloaded.ok) return dlg({title:'Não foi possível baixar',text:downloaded.error||'O download falhou.',buttons:[{label:'Fechar',v:true}]});
-  const install=await dlg({title:`Cobre ${d.version} pronto`,html:`<p>O pacote foi baixado e verificado. O Cobre vai fechar e reabrir para aplicar a atualização.</p><p class="mu">Notas da versão</p><div style="max-height:220px;overflow:auto;white-space:pre-wrap;padding:10px;border:1px solid var(--ln);border-radius:8px">${notes}</div>`,buttons:[{label:'Depois',v:false},{label:'Instalar e reiniciar',v:true}]});
+  const install=await dlg({title:`Cobre ${d.version} pronto`,html:`<p>O pacote foi baixado e verificado. O Cobre vai fechar e reabrir para aplicar a atualização.</p><p class="mu">Notas da versão</p><div class="notes">${notes}</div>`,buttons:[{label:'Depois',v:false},{label:'Instalar e reiniciar',v:true}]});
   if(!install.v) return toast('Atualização baixada; você pode instalar depois em Configurações → Atualizar Cobre');
   const started=await api.ipc.invoke('cobreUpdateInstall').catch((e)=>({ok:false,error:String(e.message||e)}));
   if(!started.ok) dlg({title:'Instalação não iniciada',text:started.error||'Tente novamente.',buttons:[{label:'Fechar',v:true}]});
@@ -632,7 +559,7 @@ FXH('updates', () => {
   api.ipc.on('cobreUpdateProgress',(p)=>{if(updateBusy)toast(`Baixando atualização… ${p.percent}%`,true);});
   api.ipc.invoke('cobreUpdateTakeNotice').then((n)=>{
     if(!n)return;
-    if(n.kind==='installed') dlg({title:`Cobre atualizado · ${n.version}`,html:`<p>A atualização foi instalada com sucesso.</p><p class="mu">O que mudou</p><div style="max-height:280px;overflow:auto;white-space:pre-wrap;padding:10px;border:1px solid var(--ln);border-radius:8px">${esc(n.notes||'Sem notas nesta versão.').slice(0,24000)}</div>`,buttons:[{label:'Continuar',v:true}]});
+    if(n.kind==='installed') dlg({title:`Cobre atualizado · ${n.version}`,html:`<p>A atualização foi instalada com sucesso.</p><p class="mu">O que mudou</p><div class="notes">${esc(n.notes||'Sem notas nesta versão.').slice(0,24000)}</div>`,buttons:[{label:'Continuar',v:true}]});
     else dlg({title:'A atualização não foi concluída',text:n.error||'Os arquivos anteriores foram restaurados. Você pode tentar novamente depois.',buttons:[{label:'Fechar',v:true}]});
   }).catch(()=>{});
 });
@@ -724,14 +651,14 @@ FXH('vu2', () => { setVu2(localStorage.vu2 === '1'); $('#t-q').textContent = 'Fi
 
 renderQueue = function () {
   const t = cur(), el = $('#queue');
-  if (!t) { el.innerHTML = '<p class="empty" style="margin:30px 10px">A fila está vazia. Toque uma música na biblioteca.</p>'; return; }
+  if (!t) { el.innerHTML = '<p class="empty">A fila está vazia. Toque uma música na biblioteca.</p>'; return; }
   const al = albums().find((g) => g.artist === t.artist && g.album === t.album);
   const info = [t.album, al && al.year, al && al.genre, al && al.tracks.length + ' faixas', al && al.dur ? fmtLong(al.dur) : ''].filter(Boolean).join(' · ');
   const rest = q.slice(pos + 1, pos + 301);
   recs = recommend(t);
   el.innerHTML = `<div class="qh"><div class="qh-info"><b>Fila</b><span class="mu">${q.length - pos - 1} faixas a seguir</span></div><div class="qh-actions"><button class="lnk queue-save" data-qsave>Salvar fila completa como playlist</button><button class="lnk queue-clear" data-qclear>Limpar próximas</button></div></div>` +
-    '<p class="sec">Tocando agora</p>' + row(t, `data-p="${pos}"`, '▸', ' cur') + `<p class="mu" style="margin:4px 10px 0">${esc(info)}</p>` +
-    (rest.length ? '<p class="sec">A seguir <span class="mu">(arraste para reordenar)</span></p>' + rest.map((x, i) => row(x, `data-p="${pos + 1 + i}" draggable="true"`, i + 1)).join('') : '<p class="mu" style="margin:10px">Nada na fila depois desta faixa.</p>') +
+    '<p class="sec">Tocando agora</p>' + row(t, `data-p="${pos}"`, '▸', ' cur') + `<p class="mu np-info">${esc(info)}</p>` +
+    (rest.length ? '<p class="sec">A seguir <span class="mu">(arraste para reordenar)</span></p>' + rest.map((x, i) => row(x, `data-p="${pos + 1 + i}" draggable="true"`, i + 1)).join('') : '<p class="mu more-note">Nada na fila depois desta faixa.</p>') +
     (recs.length ? '<p class="sec">Para ouvir depois</p><div class="rgrid">' + recs.map((x, i) => `<div class="card" data-ra="${i}"><div class="cv"></div><b>${esc(x.g.album || 'Sem álbum')}</b><i>${esc([x.g.artist, x.g.year || ''].filter(Boolean).join(' · '))}</i><span class="why">${esc(x.why)}</span></div>`).join('') + '</div>' : '');
   el.querySelectorAll('.row[data-p]').forEach((r) => { if (+r.dataset.p > pos) r.insertAdjacentHTML('beforeend', '<button class="ibtn qx" data-qrm title="Remover da fila" aria-label="Remover da fila"><svg><use href="#i-x"/></svg></button>'); });
   el.querySelectorAll('.rgrid .cv').forEach((c, i) => { c._t = recs[i].g.tracks[0]; lazy.observe(c); });
@@ -770,9 +697,9 @@ const ROLE = { producer: 'produção', 'executive producer': 'produção executi
 const roleTxt = (r) => String(r).split(': ').map((p) => ROLE[p] || p).join(' · ');
 const creditsCache = new Map();
 function getCredits(g) { const k = rk(g); if (!creditsCache.has(k)) creditsCache.set(k, api.ipc.invoke('credits', g.artist, g.album)); return creditsCache.get(k); }
-const credList = (l) => (l && l.length ? l.map((x) => `<p><span style="color:#e4d9c8">${esc(x.name)}</span> · ${esc(x.roles.map(roleTxt).join(', '))}</p>`).join('') : '<p>Sem dados.</p>');
+const credList = (l) => (l && l.length ? l.map((x) => `<p><span class="cred-name">${esc(x.name)}</span> · ${esc(x.roles.map(roleTxt).join(', '))}</p>`).join('') : '<p>Sem dados.</p>');
 function creditsHtml(d) {
-  return `<p style="color:var(--tx)">${[d.label, d.catalog, d.date, d.country].filter(Boolean).map(esc).join(' · ') || 'Sem dados da edição.'}</p><p class="ph" style="margin-top:8px">Produção e técnica</p>${credList(d.production)}<p class="ph" style="margin-top:8px">Músicos</p>${credList(d.musicians)}<p class="mu" style="margin-top:8px">Fonte: MusicBrainz. Depende de alguém ter cadastrado os créditos.</p>`;
+  return `<p class="hl">${[d.label, d.catalog, d.date, d.country].filter(Boolean).map(esc).join(' · ') || 'Sem dados da edição.'}</p><p class="ph sub-title">Produção e técnica</p>${credList(d.production)}<p class="ph sub-title">Músicos</p>${credList(d.musicians)}<p class="mu">Fonte: MusicBrainz. Depende de alguém ter cadastrado os créditos.</p>`;
 }
 async function creditsDlg(g) {
   if (!g) return;
@@ -842,7 +769,7 @@ async function encRender() {
   let L, R;
   if (encS === 0) {
     L = `<img src="${u || ''}" alt=""><h2>${esc(g.album)}</h2><p>${esc(g.artist)}${g.year ? ' · ' + g.year : ''}${g.genre ? ' · ' + esc(g.genre) : ''}</p>`;
-    R = `<h3>Faixas</h3>${g.tracks.map((t, i) => `<div class="tk" data-ti="${i}"><span>${t.no || i + 1}</span><span>${esc(t.title)}</span><span>${fmt(t.dur)}</span></div>`).join('')}<p style="margin-top:8px">${g.tracks.length} faixas${dur ? ' · ' + fmtLong(dur) : ''}</p>`;
+    R = `<h3>Faixas</h3>${g.tracks.map((t, i) => `<div class="tk" data-ti="${i}"><span>${t.no || i + 1}</span><span>${esc(t.title)}</span><span>${fmt(t.dur)}</span></div>`).join('')}<p class="enc-sum">${g.tracks.length} faixas${dur ? ' · ' + fmtLong(dur) : ''}</p>`;
   } else {
     const chosen = encReleases.find((x) => x.id === encReleaseId);
     const edition = d && [d.date, d.country, d.format, d.label, d.catalog].filter(Boolean).map(esc).join(' · ');
@@ -855,7 +782,7 @@ async function encRender() {
       '<h3>Produção e técnica</h3>' + (hasCredits ? credList(d.production) : noCredits);
     R = '<h3>Músicos</h3>' + (hasCredits ? credList(d.musicians) : noCredits) +
       '<p class="mu enc-source">Fonte: MusicBrainz. Os dados variam conforme a edição e os créditos cadastrados.</p>' +
-      '<h3>Minha review</h3><p style="color:var(--cu)">' + ('★'.repeat(r.stars || 0) || 'Sem nota') + '</p><p style="color:#e4d9c8">' + esc(r.text || '') + '</p>';
+      '<h3>Minha review</h3><p class="enc-stars">' + ('★'.repeat(r.stars || 0) || 'Sem nota') + '</p><p class="enc-text">' + esc(r.text || '') + '</p>';
   }
   $('#encl').innerHTML = L; $('#encr').innerHTML = R; $('#encs').textContent = `${encS + 1} / 2`;
 }

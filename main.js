@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain, globalShortcut, shell, nativeImage, Tray, Menu, clipboard, screen, safeStorage, protocol, net } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, globalShortcut, shell, nativeImage, Tray, Menu, clipboard, screen, safeStorage, protocol, net, nativeTheme } = require('electron');
 const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
@@ -96,7 +96,16 @@ async function migrateLegacyPreferences() {
 
 const mediaById = new Map();
 const mediaIdByPath = new Map();
-const APP_FILES = new Set(['index.html', 'renderer.js', 'features.js', 'mini.html', 'mini-renderer.js', 'account.html', 'account-renderer.js']);
+const APP_FILES = new Set([
+  'index.html', 'renderer.js', 'features.js', 'mini.html', 'mini-renderer.js', 'account.html', 'account-renderer.js',
+  'theme.js', 'layout.js', 'styles/tokens.css', 'styles/fonts.css', 'styles/app.css',
+  'fonts/bricolage-latin.woff2', 'fonts/bricolage-latin-ext.woff2', 'fonts/jetbrains-mono-latin.woff2', 'fonts/jetbrains-mono-latin-ext.woff2'
+]);
+// Cor de fundo da janela antes da página pintar: segue o tema salvo (theme.js), para o tema claro não piscar escuro.
+const themeBackground = () => {
+  const t = preferenceSnapshot.theme;
+  return t === 'light' || (t === 'system' && !nativeTheme.shouldUseDarkColors) ? '#f4efe8' : '#121110';
+};
 const mediaUrl = (file) => {
   const absolute = path.resolve(file);
   let id = mediaIdByPath.get(absolute);
@@ -494,7 +503,7 @@ app.whenReady().then(() => {
   return migrateLegacyPreferences().then(() => {
     win = new BrowserWindow({
       width: 1040, height: 700, minWidth: 760, minHeight: 520,
-      backgroundColor: '#121110', autoHideMenuBar: true, title: 'Cobre', icon: path.join(__dirname, 'icon.ico'),
+      backgroundColor: themeBackground(), autoHideMenuBar: true, title: 'Cobre', icon: path.join(__dirname, 'icon.ico'),
       webPreferences: {
         preload: path.join(__dirname, 'preload.js'),
         nodeIntegration: false,

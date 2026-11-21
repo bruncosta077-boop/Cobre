@@ -1,0 +1,138 @@
+/* ==========================================================================
+   COBRE — design tokens do app desktop
+   Base: Cobre/brand/tokens.css v1.0 (fonte única da identidade).
+   Diferenças em relação ao arquivo da marca:
+   - o tema é escolhido pelo app (theme.js grava data-theme="dark|light" no <html>);
+   - apelidos legados (--pn, --ln, --tx, --mu, --tr, --cu, --cu2) continuam
+     existindo porque o JS lê e grava essas variáveis (cor de destaque, visuais);
+   - tokens de app: --raised, --hover, --accent-ink, --danger.
+   ========================================================================== */
+
+:root {
+  /* ---------- Paleta bruta ---------- */
+  --cobre-carvao:   #121110;
+  --cobre-grafite:  #181614;
+  --cobre-linha:    #2a2623;
+  --cobre-trilho:   #3a3430;
+  --cobre-creme:    #ece6df;
+  --cobre-pedra:    #8d847b;
+  --cobre-cobre:    #c9773f;
+  --cobre-brilho:   #e6a06a;
+  --cobre-patina:   #6fb5a5;
+
+  --cobre-papel:    #f4efe8;
+  --cobre-papel-2:  #ebe4da;
+  --cobre-linha-c:  #d9cfc2;
+  --cobre-trilho-c: #cfc4b5;
+  --cobre-tinta:    #241f1a;
+  --cobre-pedra-c:  #6f655a;
+  --cobre-profundo: #964f1d;
+  --cobre-patina-c: #276d5f;
+
+  /* ---------- Cor de destaque (o JS sobrescreve --cu/--cu2 inline) ---------- */
+  --cu:  var(--cobre-cobre);
+  --cu2: var(--cobre-brilho);
+
+  /* ---------- Papéis semânticos — escuro (padrão) ---------- */
+  color-scheme: dark;
+  --bg:         var(--cobre-carvao);
+  --panel:      var(--cobre-grafite);
+  --raised:     #1f1c19;               /* popovers, menus, diálogos */
+  --sunken:     #0e0d0c;               /* campos de texto, poços */
+  --line:       var(--cobre-linha);
+  --track:      var(--cobre-trilho);
+  --text:       var(--cobre-creme);
+  --muted:      var(--cobre-pedra);
+  --faint:      #5a524b;               /* linhas de letra inativas, ícones de repouso */
+  --hover:      color-mix(in srgb, var(--cobre-creme) 6%, transparent);
+  --press:      color-mix(in srgb, var(--cobre-creme) 10%, transparent);
+  --accent:     var(--cu);
+  --accent-hi:  var(--cu2);
+  --accent-ink: var(--cu);             /* destaque usado como TEXTO/ÍCONE sobre o fundo */
+  --accent-soft: color-mix(in srgb, var(--cu) 14%, transparent);
+  --on-accent:  var(--cobre-carvao);   /* carvão sobre cobre = 5,6:1. Nunca branco. */
+  --ok:         var(--cobre-patina);
+  --danger:     #e07b6a;
+  --danger-fill:#b3402e;
+  --scrim:      rgba(8, 7, 6, .78);
+  --cover-empty: radial-gradient(circle at 34% 28%, #2c2622, #1a1715 62%, #141210);
+
+  /* ---------- Tipografia ---------- */
+  --font-display: 'Bricolage Grotesque', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+
+  /* escala do app (densa: é uma ferramenta, não uma landing) */
+  --fs-hero:  2.125rem;   /* 34px — cabeçalho de álbum/playlist, 800 */
+  --fs-title: 1.5rem;     /* 24px — faixa no player, 800 */
+  --fs-h3:    1.0625rem;  /* 17px — títulos de diálogo, 700 */
+  --fs-body:  0.875rem;   /* 14px */
+  --fs-small: 0.8125rem;  /* 13px */
+  --fs-meta:  0.75rem;    /* 12px — mono 500: formato, tempo, bitrate */
+  --fs-micro: 0.6875rem;  /* 11px — rótulos de seção em mono */
+
+  /* ---------- Forma ---------- */
+  --r-xs: 6px;
+  --r-sm: 8px;
+  --r-md: 14px;
+  --r-lg: 22px;
+  --r-pill: 99px;
+  --r-disc: 50%;
+
+  /* ---------- Espaço (base 4) ---------- */
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px;
+  --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 80px;
+
+  /* ---------- Movimento: "aquecer" ---------- */
+  --ease-warm: cubic-bezier(.22, .8, .24, 1);
+  --t-fast: 120ms;
+  --t-base: 240ms;
+  --t-slow: 480ms;
+  --glow: 0 0 36px color-mix(in srgb, var(--cu) 38%, transparent);
+  --glow-sm: 0 0 18px color-mix(in srgb, var(--cu) 34%, transparent);
+  --shadow-pop: 0 18px 48px #000a, 0 0 0 1px #0006;
+  --shadow-lift: 0 30px 80px #0008;
+  --sheen: linear-gradient(140deg, #ffffff2e 0%, #ffffff00 26%);  /* "o reflexo" */
+
+  /* ---------- Assinatura: o disco de cobre ---------- */
+  --disc: conic-gradient(from 20deg, #6b2d12, #c9773f, #e6a06a, #8a3d17, #3a1a0c, #c9773f, #6b2d12);
+
+  /* ---------- Apelidos legados (lidos pelo JS e por estilos antigos) ---------- */
+  --pn: var(--panel);
+  --ln: var(--line);
+  --tx: var(--text);
+  --mu: var(--muted);
+  --tr: var(--track);
+}
+
+/* ---------- Tema claro ---------- */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: var(--cobre-papel);
+  --panel: var(--cobre-papel-2);
+  --raised: #fbf8f3;
+  --sunken: #fffdf9;
+  --line: var(--cobre-linha-c);
+  --track: var(--cobre-trilho-c);
+  --text: var(--cobre-tinta);
+  --muted: var(--cobre-pedra-c);
+  --faint: #a89c8e;
+  --hover: color-mix(in srgb, var(--cobre-tinta) 6%, transparent);
+  --press: color-mix(in srgb, var(--cobre-tinta) 10%, transparent);
+  /* o destaque escolhido pelo usuário foi pensado para o escuro. Como texto/ícone sobre o papel,
+     a luminosidade OKLCH tem teto de 0,48: mantém o tom e passa AA (≥ 4,8:1) com todos os presets */
+  --accent-ink: oklch(from var(--cu) min(l, 0.48) c h);
+  --accent-soft: color-mix(in srgb, var(--cu) 16%, transparent);
+  --ok: var(--cobre-patina-c);
+  --danger: #a8392a;
+  --danger-fill: #b3402e;
+  --scrim: rgba(36, 31, 26, .42);
+  --cover-empty: radial-gradient(circle at 34% 28%, #fffaf3, #e4dacd 62%, #d9cdbe);
+  --shadow-pop: 0 18px 48px #2a1a0e26, 0 0 0 1px #2a1a0e14;
+  --shadow-lift: 0 30px 80px #2a1a0e30;
+  --sheen: linear-gradient(140deg, #ffffff66 0%, #ffffff00 28%);
+}
+
+/* ---------- Movimento reduzido ---------- */
+@media (prefers-reduced-motion: reduce) {
+  :root { --t-fast: 0ms; --t-base: 0ms; --t-slow: 0ms; --glow: none; --glow-sm: none; }
+}

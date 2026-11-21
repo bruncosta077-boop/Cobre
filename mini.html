@@ -1,37 +1,51 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><title>Cobre</title>
+<meta name="color-scheme" content="dark light">
+<script src="theme.js"></script>
+<link rel="stylesheet" href="styles/fonts.css">
+<link rel="stylesheet" href="styles/tokens.css">
 <style>
-:root{--bg:#181614;--ln:#2a2623;--tx:#ece6df;--mu:#8d847b;--cu:#c9773f;--cu2:#e6a06a}
+/* Mini player: segue o prototipo do guia da marca (capa redonda girando, progresso em cobre). */
 *{box-sizing:border-box}
 html,body{margin:0;width:100%;height:100%}
-body{position:relative;background:radial-gradient(ellipse at top,#28221d 0%,var(--bg) 68%);color:var(--tx);font:12px/1.35 "Segoe UI",sans-serif;padding:8px 10px 14px;border:1px solid var(--ln);display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:5px;-webkit-app-region:drag;overflow:hidden;user-select:none}
-.top{height:20px;width:100%;display:flex;justify-content:flex-end;align-items:center;gap:3px;-webkit-app-region:no-drag}
+body{position:relative;background:radial-gradient(120% 70% at 50% 0%,color-mix(in srgb,var(--cu) 12%,var(--panel)) 0%,var(--panel) 62%);color:var(--text);
+  font:400 12px/1.35 var(--font-display);-webkit-font-smoothing:antialiased;padding:8px 12px 14px;border:1px solid var(--line);
+  display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:6px;-webkit-app-region:drag;overflow:hidden;user-select:none}
+.top{height:20px;width:100%;display:flex;justify-content:flex-end;align-items:center;gap:4px;-webkit-app-region:no-drag}
 .cw{position:relative;width:min(128px,42vw,46vh);flex:0 0 auto;align-self:center}
-#c{width:100%;aspect-ratio:1;border-radius:10px;background:#221f1c center/cover;box-shadow:0 6px 18px rgba(0,0,0,.32)}
+/* a capa e um disco; gira devagar so enquanto toca (o botao mostra o icone de pausar) */
+#c{width:100%;aspect-ratio:1;border-radius:50%;background:var(--cover-empty) center/cover;
+  box-shadow:0 0 0 1px var(--line),0 10px 26px #0006;outline:1px solid var(--line);outline-offset:5px;
+  animation:spin 18s linear infinite;animation-play-state:paused;transition:outline-color var(--t-slow) var(--ease-warm),box-shadow var(--t-slow) var(--ease-warm)}
+.cw::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--sheen);pointer-events:none}
+body:has(#t path[d^="M7 5"]) #c{animation-play-state:running;outline-color:color-mix(in srgb,var(--cu) 55%,transparent);box-shadow:0 0 0 1px var(--line),0 10px 26px #0006,var(--glow-sm)}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){#c{animation:none}}
 b,i{display:block;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-style:normal;text-align:center}
-b{font-size:12px;font-weight:600}
-i{color:var(--mu);font-size:10px;margin-top:1px}
-#p{width:100%;height:4px;background:var(--ln);border-radius:4px;overflow:hidden}
-#p div{height:100%;width:0;background:linear-gradient(90deg,var(--cu),var(--cu2))}
-.k{display:flex;align-items:center;justify-content:center;gap:12px;height:36px;width:100%;-webkit-app-region:no-drag}
-button{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08);padding:0;color:#c8bdb2;cursor:pointer;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;outline:none;flex:none;transition:background .15s,color .15s,transform .15s}
-button:hover{color:var(--tx);background:rgba(255,255,255,.13);transform:scale(1.06)}
-button:focus-visible{outline:2px solid var(--cu2);outline-offset:2px}
-button:active{transform:scale(.96)}
-#t{background:linear-gradient(135deg,var(--cu),var(--cu2));border:0;color:#181614;width:34px;height:34px}
-#t:hover{filter:brightness(1.12);color:#181614}
+b{font-size:13px;font-weight:700;letter-spacing:-.01em}
+i{color:var(--muted);font-size:11px;margin-top:1px}
+#p{width:100%;height:4px;background:var(--track);border-radius:var(--r-pill);overflow:hidden}
+#p div{height:100%;width:0;border-radius:var(--r-pill);background:linear-gradient(90deg,var(--cu),var(--cu2))}
+.k{display:flex;align-items:center;justify-content:center;gap:14px;height:38px;width:100%;-webkit-app-region:no-drag}
+button{background:transparent;border:0;padding:0;color:var(--text);cursor:pointer;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;outline:none;flex:none;
+  transition:background-color var(--t-base) var(--ease-warm),color var(--t-fast),transform var(--t-fast) var(--ease-warm),filter var(--t-base),box-shadow var(--t-base)}
+button:hover{background:var(--hover)}
+button:focus-visible{outline:2px solid var(--accent-hi);outline-offset:2px}
+button:active{transform:scale(.95)}
+#t{background:var(--sheen),var(--cu);color:var(--on-accent);width:38px;height:38px;box-shadow:0 4px 12px #0005,inset 0 0 0 1px #ffffff1f}
+#t:hover{filter:brightness(1.06);box-shadow:0 4px 12px #0005,inset 0 0 0 1px #ffffff1f,var(--glow-sm);color:var(--on-accent)}
 svg{width:15px;height:15px;fill:currentColor;display:block}
 svg.st{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.top button{width:19px;height:19px;border:0;background:transparent;color:var(--mu)}
-.top button:hover{background:rgba(255,255,255,.1);color:var(--tx);transform:none}
+.top button{width:20px;height:20px;color:var(--muted)}
+.top button:hover{color:var(--text)}
 .top svg{width:12px;height:12px}
 .vr{height:22px;display:flex;align-items:center;justify-content:center;gap:7px;-webkit-app-region:no-drag}
-#vb{width:22px;height:22px;border:0;background:transparent;color:var(--mu)}
+#vb{width:22px;height:22px;color:var(--muted)}
 #vb svg{width:14px;height:14px}
 #vp{width:112px;display:flex;align-items:center}
 #vp[hidden]{display:none}
 #vl{width:100%;height:3px;accent-color:var(--cu);cursor:pointer}
-#resize{position:absolute;right:1px;bottom:1px;width:12px;height:12px;cursor:nwse-resize;-webkit-app-region:no-drag;opacity:.48;background:linear-gradient(135deg,transparent 0 56%,var(--mu) 57% 62%,transparent 63% 72%,var(--mu) 73% 78%,transparent 79%);}
+#resize{position:absolute;right:1px;bottom:1px;width:12px;height:12px;cursor:nwse-resize;-webkit-app-region:no-drag;opacity:.48;background:linear-gradient(135deg,transparent 0 56%,var(--muted) 57% 62%,transparent 63% 72%,var(--muted) 73% 78%,transparent 79%)}
 #resize:hover{opacity:.95}
 </style></head>
 <body>

@@ -2,23 +2,43 @@
 <html lang="pt-BR"><head><meta charset="utf-8">
 
 <title>Conta Cobre</title>
+<meta name="color-scheme" content="dark light">
+<script src="theme.js"></script>
+<link rel="stylesheet" href="styles/fonts.css">
+<link rel="stylesheet" href="styles/tokens.css">
 <style>
-  :root{--bg:#121110;--panel:#181614;--line:#2a2623;--tx:#ece6df;--mu:#8d847b;--cu:#c9773f;--ok:#5fb37a;--bad:#d1604f}
-  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--tx);font:14px system-ui,Segoe UI,sans-serif;padding:24px}
-  h1{font-size:20px;margin:0 0 4px} .mu{color:var(--mu)} .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-top:16px}
-  label{display:block;margin:12px 0 4px;color:var(--mu);font-size:12px}
-  input{width:100%;padding:10px;background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--tx);font-size:14px}
-  input:focus{outline:1px solid var(--cu)}
-  button{padding:10px 14px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--tx);cursor:pointer;font-size:14px}
-  button.pri{background:var(--cu);border-color:var(--cu);color:#1a1209;font-weight:600} button:disabled{opacity:.5;cursor:default}
+  /* Conta Cobre. account-renderer.js usa var(--ok) e var(--mu), definidos em tokens.css. */
+  :root{--bad:var(--danger)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:400 14px/1.5 var(--font-display);-webkit-font-smoothing:antialiased;padding:28px 26px}
+  h1{font-size:1.625rem;font-weight:800;letter-spacing:-.025em;line-height:1.1;margin:0 0 6px;display:flex;align-items:center;gap:12px}
+  /* o anel do simbolo, desenhado em CSS */
+  h1::before{content:"";flex:none;width:22px;height:22px;border-radius:50%;border:4px solid var(--cu);border-right-color:transparent}
+  .mu{color:var(--muted)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px 20px;margin-top:16px}
+  .card>b{font-weight:700}
+  label{display:block;margin:14px 0 6px;color:var(--muted);font-size:12px}
+  input{width:100%;padding:10px 13px;background:var(--sunken);border:1px solid var(--line);border-radius:10px;color:var(--text);font:inherit;
+    transition:border-color var(--t-base) var(--ease-warm),box-shadow var(--t-base) var(--ease-warm)}
+  input:focus{outline:none;border-color:var(--accent-hi);box-shadow:0 0 0 3px var(--accent-soft)}
+  ::placeholder{color:var(--faint)}
+  button{padding:10px 16px;border-radius:var(--r-pill);border:1px solid var(--track);background:transparent;color:var(--text);cursor:pointer;font:500 14px var(--font-display);
+    transition:background-color var(--t-base) var(--ease-warm),filter var(--t-base),box-shadow var(--t-base),transform var(--t-fast) var(--ease-warm)}
+  button:hover{background:var(--hover)}
+  button:active{transform:scale(.98)}
+  button:focus-visible{outline:2px solid var(--accent-hi);outline-offset:2px}
+  button.pri{background:var(--sheen),var(--cu);border-color:transparent;color:var(--on-accent);font-weight:600}
+  button.pri:hover{filter:brightness(1.06);box-shadow:var(--glow-sm)}
+  button:disabled{opacity:.5;cursor:default}
+  button.small{font-size:12px}
   .row{display:flex;gap:8px;margin-top:16px} .row>button{flex:1}
-  .err{color:var(--bad);margin-top:12px;min-height:18px}
-  .dev{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)} .dev:first-child{border-top:0}
-  .dot{width:10px;height:10px;border-radius:50%;background:var(--mu);flex:none} .dot.on{background:var(--ok)}
-  .dev .n{flex:1;min-width:0} .dev .n b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .err{color:var(--danger);margin-top:12px;min-height:18px;font-size:13px}
+  .dev{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)} .dev:first-child{border-top:0}
+  .dot{width:10px;height:10px;border-radius:50%;background:var(--track);flex:none} .dot.on{background:var(--ok);box-shadow:0 0 0 4px color-mix(in srgb,var(--ok) 18%,transparent)}
+  .dev .n{flex:1;min-width:0} .dev .n b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
   .small{font-size:12px} .hide{display:none}
-  .pairrow{display:flex;gap:8px;align-items:center}.pairrow input{flex:1;min-width:0;text-transform:uppercase;letter-spacing:.12em}.pairrow button{flex:none}
-  .request{display:flex;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--line)}.request:first-child{border-top:0}.request>div:first-child{flex:1;min-width:0}.request b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.request-actions{display:flex;gap:6px;flex:none}.request-actions button{padding:7px 9px;font-size:12px}
+  .pairrow{display:flex;gap:8px;align-items:center}.pairrow input{flex:1;min-width:0;text-transform:uppercase;letter-spacing:.12em;font-family:var(--font-mono);font-weight:500}.pairrow button{flex:none}
+  .request{display:flex;align-items:center;gap:8px;padding:12px 0;border-top:1px solid var(--line)}.request:first-child{border-top:0}.request>div:first-child{flex:1;min-width:0}.request b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.request-actions{display:flex;gap:6px;flex:none}.request-actions button{padding:7px 12px;font-size:12px}
 </style></head><body>
 <h1>Conta Cobre</h1>
 <div class="mu">Uma conta para o computador, o celular e a TV.</div>

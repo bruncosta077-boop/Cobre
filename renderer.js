@@ -241,7 +241,7 @@ function render() {
     } else view = a ? a.tracks : scope.pl ? plTracks(scope.pl) : src;
     const rv = a ? revs[rk(a)] || {} : {};
     const head = a ? `<div class="ah"><div class="cv" id="ahc"></div><div><h2>${esc(a.album || 'Sem álbum')}</h2><p>${esc(a.artist)}${a.year ? ' · ' + a.year : ''} · ${a.tracks.length} faixas${a.dur ? ' · ' + fmtLong(a.dur) : ''}${a.genre ? ' · ' + esc(a.genre) : ''}</p><div class="stars" title="Clique para dar estrelas">${starsHtml(rv.stars || 0)}<button class="ibtn${rv.text ? ' on' : ''}" data-rvt title="Minha review" aria-label="Minha review"><svg><use href="#i-note"/></svg></button><button class="ibtn" data-rv title="Review da web" aria-label="Review da web"><svg><use href="#i-globe"/></svg></button>${rolled ? '<button class="ibtn" data-roll title="Sortear outro álbum" aria-label="Sortear outro álbum"><svg><use href="#i-dice"/></svg></button>' : ''}</div><div class="acts"><button class="playb" data-play title="Tocar álbum" aria-label="Tocar álbum"><svg><use href="#i-play"/></svg></button></div></div></div><div class="rv" id="rvbox"${rvOpen ? '' : ' hidden'}><textarea id="rvt" placeholder="Escreva o que você achou deste álbum…">${esc(rv.text || '')}</textarea><p class="sv"><span id="rvs"></span> <button class="web" data-rvx>Fechar</button></p></div>` : plHead(scope.pl, view);
-    $('#list').innerHTML = head + (view.length ? view.map((t, i) => row(t, `data-i="${i}"`, a ? t.no || i + 1 : i + 1, '', cnt ? cnt.get(t.path) + '×' : '')).join('') : (scope.pl ? '<p class="empty" style="margin:30px 10px">Playlist vazia. Clique com o botão direito numa música e escolha “Adicionar à playlist”.</p>' : '<p class="empty" style="margin:30px 10px">Ainda não há reproduções neste mês.</p>'));
+    $('#list').innerHTML = head + (view.length ? view.map((t, i) => row(t, `data-i="${i}"`, a ? t.no || i + 1 : i + 1, '', cnt ? cnt.get(t.path) + '×' : '')).join('') : (scope.pl ? '<p class="empty">Playlist vazia. Clique com o botão direito numa música e escolha “Adicionar à playlist”.</p>' : '<p class="empty">Ainda não há reproduções neste mês.</p>'));
     if (a) bg($('#ahc'), a.tracks[0]); else if (scope.pl && view[0]) bg($('#plc'), view[0]);
   } else {
     view = src;
@@ -262,7 +262,7 @@ function render() {
       const sub = x.pl ? `${x.tracks.length} faixas${x.pl.smart ? ' · inteligente' : ''}` : lvl === 'artist' ? new Set(x.tracks.map((t) => t.album)).size + ' álbuns' : lvl === 'genre' ? x.nAlb + ' álbuns' : mode === 'topAlbums' ? `${x.artist} · ${x.plays}×` : [x.artist, x.year || ''].filter(Boolean).join(' · ');
       const stars = !lvl && revs[rk(x)]?.stars ? `<span class="rt">${'★'.repeat(revs[rk(x)].stars)}</span>` : '';
       return `<div class="card${lvl === 'artist' && phOn ? ' art' : ''}" data-i="${i}"><div class="cv"></div><b>${esc(title)}</b><i>${esc(sub)}</i>${stars}</div>`;
-    }).join('') : `<p class="empty" style="margin:30px 10px">${topM ? 'Ainda não há reproduções neste mês.' : 'Nada por aqui.'}</p>`;
+    }).join('') : `<p class="empty">${topM ? 'Ainda não há reproduções neste mês.' : 'Nada por aqui.'}</p>`;
     if (mode === 'playlists') $('#grid').insertAdjacentHTML('beforeend', '<div class="card new" data-new="pl">+ Nova playlist</div><div class="card new" data-new="smart">+ Playlist inteligente</div>');
     if (rank && scope.artist && mode === 'artists') $('#grid').innerHTML = tierHtml(gs);
     $('#grid').querySelectorAll('.card[data-i]').forEach((cd) => {
@@ -310,7 +310,7 @@ function go(t, d, X) {
   }
   $('#title').textContent = t.title;
   $('#meta').textContent = [t.artist, t.album].filter(Boolean).join(' · ') || 'Artista desconhecido';
-  $('#spec').innerHTML = `<span class="fmt f-${esc(t.fmt.toLowerCase())}">${esc(t.fmt)}</span>${hrOn && t.hr ? '<span class="hrb">Hi-Res</span>' : ''}${esc(t.spec)}<button class="ibtn" data-an title="Analisar arquivo (espectro)" aria-label="Analisar arquivo" style="margin-left:auto"><svg><use href="#i-spec"/></svg></button>`;
+  $('#spec').innerHTML = `<span class="fmt f-${esc(t.fmt.toLowerCase())}">${esc(t.fmt)}</span>${hrOn && t.hr ? '<span class="hrb">Hi-Res</span>' : ''}${esc(t.spec)}<button class="ibtn" data-an title="Analisar arquivo (espectro)" aria-label="Analisar arquivo"><svg><use href="#i-spec"/></svg></button>`;
   $('#cover').style.backgroundImage = '';
   $('#cover').textContent = 'Sem capa';
   getCover(t).then((u) => {
@@ -527,7 +527,8 @@ function gearHtml() {
   }).join('');
   return '<p class="ph">Configurações</p>' +
     '<p class="settings-section">Conta</p><div class="pr"><button class="lnk" data-act="account">Conta Cobre…</button></div>' +
-    '<p class="settings-section">Aparência</p><p class="mu">Tamanho da interface <span id="zv">' + z + '%</span></p><input type="range" id="zs" min="80" max="140" step="5" value="' + z + '">' +
+    '<p class="settings-section">Aparência</p><p class="mu">Tema</p><select id="thsel">' + opts([['dark', 'Escuro'], ['light', 'Claro'], ['system', 'Seguir o Windows']], window.cobreTheme ? cobreTheme.get() : 'dark') + '</select>' +
+    '<p class="mu">Tamanho da interface <span id="zv">' + z + '%</span></p><input type="range" id="zs" min="80" max="140" step="5" value="' + z + '">' +
     '<p class="mu">Visualização da capa</p><select id="vzsel">' + opts(VZ.map((k) => [k, VN[k]]), vz) + '</select>' +
     '<p class="mu">Cor de destaque</p><div class="pr">' + accents + '</div>' +
     '<p class="settings-section">Biblioteca</p><label class="net"><input type="checkbox" id="netc"' + (net ? ' checked' : '') + '> Buscar capas e fotos ausentes online</label>' +
@@ -587,6 +588,7 @@ $('#pop').oninput = (e) => {
 $('#pop').onchange = (e) => {
   const t = e.target, K = { ftr: 'tr', fcf: 'cf', fhp: 'hp', flp: 'lp', frate: 'rate', fcrk: 'crk', fvu: 'vu' };
   if (t.id === 'vzsel') setViz(t.value);
+  else if (t.id === 'thsel') { if (window.cobreTheme) cobreTheme.set(t.value); }
   else if (t.id === 'netc') { net = t.checked; localStorage.net = net ? '1' : '0'; covs.clear(); phs.clear(); }
   else if (t.id === 'hrc') { hrOn = t.checked; localStorage.hr = hrOn ? '1' : '0'; render(); }
   else if (t.id === 'bgc') { localStorage.bg = t.checked ? '1' : '0'; api.setBg(t.checked); }
@@ -659,13 +661,13 @@ function recommend(t) {
 let recs = [];
 function renderQueue() {
   const t = cur(), el = $('#queue');
-  if (!t) { el.innerHTML = '<p class="empty" style="margin:30px 10px">A fila está vazia. Toque uma música na biblioteca.</p>'; return; }
+  if (!t) { el.innerHTML = '<p class="empty">A fila está vazia. Toque uma música na biblioteca.</p>'; return; }
   const al = albums().find((g) => g.artist === t.artist && g.album === t.album);
   const info = [t.album, al?.year, al?.genre, al && al.tracks.length + ' faixas', al?.dur ? fmtLong(al.dur) : ''].filter(Boolean).join(' · ');
   const rest = q.slice(pos + 1);
   recs = recommend(t);
-  el.innerHTML = '<p class="sec">Tocando agora</p>' + row(t, `data-p="${pos}"`, '▸', ' cur') + `<p class="mu" style="margin:4px 10px 0">${esc(info)}</p>` +
-    (rest.length ? '<p class="sec">A seguir</p>' + rest.slice(0, 10).map((x, i) => row(x, `data-p="${pos + 1 + i}"`, i + 1)).join('') + (rest.length > 10 ? `<p class="mu" style="margin:6px 10px">e mais ${rest.length - 10} na fila</p>` : '') : '') +
+  el.innerHTML = '<p class="sec">Tocando agora</p>' + row(t, `data-p="${pos}"`, '▸', ' cur') + `<p class="mu np-info">${esc(info)}</p>` +
+    (rest.length ? '<p class="sec">A seguir</p>' + rest.slice(0, 10).map((x, i) => row(x, `data-p="${pos + 1 + i}"`, i + 1)).join('') + (rest.length > 10 ? `<p class="mu more-note">e mais ${rest.length - 10} na fila</p>` : '') : '') +
     (recs.length ? '<p class="sec">Para ouvir depois</p><div class="rgrid">' + recs.map((x, i) => `<div class="card" data-ra="${i}"><div class="cv"></div><b>${esc(x.g.album || 'Sem álbum')}</b><i>${esc([x.g.artist, x.g.year || ''].filter(Boolean).join(' · '))}</i><span class="why">${esc(x.why)}</span></div>`).join('') + '</div>' : '');
   el.querySelectorAll('.rgrid .cv').forEach((c, i) => { c._t = recs[i].g.tracks[0]; lazy.observe(c); });
 }
@@ -754,13 +756,13 @@ async function coversCheck() {
 }
 
 function aboutDlg() {
-  const logo = '<svg viewBox="0 0 200 200" width="72" height="72" style="align-self:center"><rect width="200" height="200" rx="44" fill="#121110"/><path d="M150.4 139.4 A64 64 0 1 1 150.4 60.6" fill="none" stroke="#c9773f" stroke-width="14" stroke-linecap="round"/><g stroke="#ece6df" stroke-width="7" stroke-linecap="round"><line x1="64" y1="86" x2="64" y2="114"/><line x1="82" y1="71" x2="82" y2="129"/><line x1="100" y1="58" x2="100" y2="142"/><line x1="118" y1="78" x2="118" y2="122"/><line x1="136" y1="89" x2="136" y2="111"/></g></svg>';
+  const logo = '<svg viewBox="0 0 200 200" width="72" height="72" class="about-logo"><rect width="200" height="200" rx="44" fill="#121110"/><path d="M150.4 139.4 A64 64 0 1 1 150.4 60.6" fill="none" stroke="#c9773f" stroke-width="14" stroke-linecap="round"/><g stroke="#ece6df" stroke-width="7" stroke-linecap="round"><line x1="64" y1="86" x2="64" y2="114"/><line x1="82" y1="71" x2="82" y2="129"/><line x1="100" y1="58" x2="100" y2="142"/><line x1="118" y1="78" x2="118" y2="122"/><line x1="136" y1="89" x2="136" y2="111"/></g></svg>';
   return dlg({
     title: 'Sobre o Cobre',
     html: logo +
-      `<p style="text-align:center;color:var(--tx)"><b style="font-size:18px">Cobre</b><br>Versão ${VERSION}</p>` +
-      '<p style="color:var(--tx)">Criado por <b>Bruno C S Moraes</b>, com contribuições de <b>@dilucas00</b> e apoio do Claude (Anthropic).</p>' +
-      '<p style="color:var(--tx)">© 2026 Bruno C S Moraes. Todos os direitos reservados.</p>' +
+      `<p class="about-name"><b>Cobre</b><span>Versão ${VERSION}</span></p>` +
+      '<p class="hl">Criado por <b>Bruno C S Moraes</b>, com contribuições de <b>@dilucas00</b> e apoio do Claude (Anthropic).</p>' +
+      '<p class="hl">© 2026 Bruno C S Moraes. Todos os direitos reservados.</p>' +
       '<p class="mu">Componentes de terceiros: Electron (licença MIT), Chromium (BSD-3-Clause e outras), Node.js (MIT) e music-metadata (MIT). Os textos completos do Electron e do Chromium estão nos arquivos LICENSE e LICENSES.chromium.html, na pasta do programa.</p>' +
       '<p class="mu">Dados e imagens vêm de MusicBrainz e Cover Art Archive (capas), LRCLIB (letras) e Deezer (fotos de artistas e capas), cada um sob os seus próprios termos.</p>',
     buttons: [{ label: 'Fechar', v: true }]
@@ -862,7 +864,7 @@ async function analyze(t) {
       for (let i = st; i < Math.min(len, st + 200000); i++) { const v = x[i] * 32768; if (Math.abs(v) > 0.5) { n++; if (Math.abs(v - Math.round(v)) > 0.002) non++; } }
       note16 = n > 5000 && non / n < 0.002;
     }
-    g.font = '12px "Segoe UI", sans-serif'; g.fillStyle = '#c9c1b8';
+    g.font = '500 12px "JetBrains Mono", Consolas, monospace'; g.fillStyle = '#c9c1b8';
     const fs = nyq > 48000 ? 10000 : nyq > 30000 ? 5000 : 2000, dur = len / sr, ts = [5, 10, 15, 30, 60, 120, 300].find((s) => dur / s <= 10) || 600;
     g.textAlign = 'right';
     for (let f = 0; f <= nyq; f += fs) { const y = M.t + (1 - f / nyq) * ph; g.fillRect(M.l - 4, y, 4, 1); g.fillText(f / 1000 + 'k', M.l - 8, y + 4); }
@@ -885,7 +887,7 @@ async function analyze(t) {
       `<b>Medido:</b> o espectro ${flat ? 'preenche toda a faixa até ' + fk(nyq) : 'vai até cerca de ' + fk(cut) + (sharp ? ' (corte abrupto)' : ' (queda gradual)')}; a taxa declarada permite até ${fk(nyq)}.`,
       `<b>Pico:</b> ${(20 * Math.log10(pk || 1e-9)).toFixed(1)} dBFS${pk >= 0.999 ? ' (possível clipping)' : ''}`,
       `<br>${v}`,
-      '<span style="font-size:12px">O arquivo é decodificado na taxa original, então o resultado vem do conteúdo de áudio e não só dos metadados.</span>'
+      '<span class="small-note">O arquivo é decodificado na taxa original, então o resultado vem do conteúdo de áudio e não só dos metadados.</span>'
     ].join('<br>'));
   } catch (e) { say('Não consegui analisar este arquivo: ' + esc(String(e.message || e))); }
 }
@@ -898,7 +900,7 @@ const electronState = (h) => {
 };
 async function healthDlg() {
   const h = await api.health(), st = electronState(h);
-  const row = (ok, s) => `<p style="color:${ok ? 'var(--tx)' : '#e0a24a'}">${ok ? '✓' : '⚠'} ${s}</p>`;
+  const row = (ok, s) => `<p class="${ok ? 'hl-ok' : 'hl-warn'}">${ok ? '✓' : '⚠'} ${s}</p>`;
   localStorage.lastHealth = Date.now();
   await dlg({
     title: 'Saúde do Cobre',
@@ -1029,7 +1031,7 @@ async function plDelete(pl) {
 }
 async function newSmart() {
   const gen = [...new Set(lib.map((t) => t.genre).filter(Boolean))].sort(), fm = [...new Set(lib.map((t) => t.fmt))].sort();
-  const html = `<div class="fr"><label>Gênero<select id="sg"><option value="">Qualquer</option>${gen.map((g) => `<option>${esc(g)}</option>`).join('')}</select></label><label>Formato<select id="sf"><option value="">Qualquer</option>${fm.map((g) => `<option>${esc(g)}</option>`).join('')}</select></label><label>Ano de<input id="sy1" type="number" min="1900" max="2100"></label><label>Ano até<input id="sy2" type="number" min="1900" max="2100"></label><label>Nota mínima<select id="ss"><option value="0">Qualquer</option>${[1, 2, 3, 4, 5].map((n) => `<option value="${n}">${n}★ ou mais</option>`).join('')}</select></label><label>Ordem<select id="so"><option value="random">Aleatória</option><option value="plays">Mais ouvidas no mês</option><option value="recent">Mais recentes</option><option value="">Como está</option></select></label><label>Limite de faixas<input id="sl" type="number" value="50" min="1"></label><label>Adicionadas há (dias)<input id="sr" type="number" min="1" placeholder="qualquer"></label></div><label style="flex-direction:row;gap:8px;align-items:center"><input type="checkbox" id="sh"> Só Hi-Res</label><label style="flex-direction:row;gap:8px;align-items:center"><input type="checkbox" id="su"> Só nunca ouvidas</label>`;
+  const html = `<div class="fr"><label>Gênero<select id="sg"><option value="">Qualquer</option>${gen.map((g) => `<option>${esc(g)}</option>`).join('')}</select></label><label>Formato<select id="sf"><option value="">Qualquer</option>${fm.map((g) => `<option>${esc(g)}</option>`).join('')}</select></label><label>Ano de<input id="sy1" type="number" min="1900" max="2100"></label><label>Ano até<input id="sy2" type="number" min="1900" max="2100"></label><label>Nota mínima<select id="ss"><option value="0">Qualquer</option>${[1, 2, 3, 4, 5].map((n) => `<option value="${n}">${n}★ ou mais</option>`).join('')}</select></label><label>Ordem<select id="so"><option value="random">Aleatória</option><option value="plays">Mais ouvidas no mês</option><option value="recent">Mais recentes</option><option value="">Como está</option></select></label><label>Limite de faixas<input id="sl" type="number" value="50" min="1"></label><label>Adicionadas há (dias)<input id="sr" type="number" min="1" placeholder="qualquer"></label></div><label class="chk"><input type="checkbox" id="sh"> Só Hi-Res</label><label class="chk"><input type="checkbox" id="su"> Só nunca ouvidas</label>`;
   const r = await dlg({
     title: 'Nova playlist inteligente', input: '', ph: 'Nome da playlist', html,
     read: () => ({ genre: $('#sg').value, fmt: $('#sf').value, yfrom: +$('#sy1').value || 0, yto: +$('#sy2').value || 0, stars: +$('#ss').value, order: $('#so').value, limit: +$('#sl').value || 50, recent: +$('#sr').value || 0, hires: $('#sh').checked, unplayed: $('#su').checked }),
@@ -1170,7 +1172,7 @@ function drawVU() {
     c.fillStyle = '#1f1c19'; c.beginPath(); c.roundRect(14, top + 14, W - 28, h - 28, 14); c.fill();
     c.lineWidth = 3; c.strokeStyle = '#8d847b'; c.beginPath(); c.arc(px, py, R, ag(-50), ag(-50 + 100 * 30 / 36)); c.stroke();
     c.strokeStyle = A; c.beginPath(); c.arc(px, py, R, ag(-50 + 100 * 30 / 36), ag(50)); c.stroke();
-    c.font = Math.round(h * 0.075) + 'px "Segoe UI", sans-serif'; c.textAlign = 'center'; c.fillStyle = '#8d847b';
+    c.font = Math.round(h * 0.075) + 'px "Bricolage Grotesque", "Segoe UI", sans-serif'; c.textAlign = 'center'; c.fillStyle = '#8d847b';
     for (let d = -36; d <= 0; d += 2) {
       const a = ag(-50 + 100 * (d + 36) / 36), major = [-30, -20, -10, -6, -3, 0].includes(d), r1 = R + (major ? 14 : 7);
       c.lineWidth = major ? 2.5 : 1.2; c.strokeStyle = d >= -6 ? A : '#8d847b';
