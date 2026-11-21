@@ -7,7 +7,8 @@
 - Mobile/TV continuam passando pela autorização Cobre ID e aprovação local; a mídia não passa pelo Server.
 - `npm test`: 13 testes passaram; `npm audit --audit-level=moderate` reportou zero vulnerabilidades conhecidas. `npm run dist` gerou instalador e ZIP portável localmente (sem assinatura digital de código).
 - O pacote interno `Cobre-Update-v3.13.0-x64.zip` foi gerado com 2,57 MiB; conferi que contém `desktop-discovery.js` e que o extrator o permite apenas pela lista segura existente. SHA-256 local: `dbde07db5fa8635dc99c0be2980fb708685e17a995e9564ce83b50a51260733b`.
-- Descoberta em roteadores/aparelhos físicos ainda precisa de validação pelo usuário; CI do GitHub deve reconstruir e verificar os pacotes da publicação.
+- GitHub Actions compilou e publicou EXE, ZIP, pacote interno e checksums no [run 44946779616](https://github.com/bruncosta077-boop/Cobre/actions/runs/44946779616); release pública: [Cobre Desktop 3.13.0](https://github.com/bruncosta077-boop/Cobre/releases/tag/cobre-desktop-v3.13.0). Os artefatos oficiais são reconstruídos no CI, sem assinatura de código Windows.
+- Descoberta em roteadores/aparelhos físicos ainda precisa de validação pelo usuário; QR/endereço manual seguem disponíveis como alternativa.
 
 ## 2026-11-20 — versão 3.6.0
 

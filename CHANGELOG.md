@@ -6,7 +6,8 @@
 - O anúncio não inclui endereço de acesso, token, chave LAN, conta ou senha. Mobile/TV ainda pedem uma concessão pelo Cobre Server e o Desktop precisa aprovar o aparelho.
 - O anúncio é removido ao desligar o acesso remoto, sair da conta ou encerrar o aplicativo; falhas do mDNS não interrompem o servidor LAN existente.
 - O Server continua coordenando conta e autorização; o áudio segue diretamente do Desktop para o cliente.
-- `npm test` passou (13 testes); build e publicação ainda precisam ser concluídos no GitHub Actions.
+- `npm test` passou (13 testes), `npm audit` reportou zero vulnerabilidades e o GitHub Actions compilou/publicou os quatro artefatos no [run 44946779616](https://github.com/bruncosta077-boop/Cobre/actions/runs/44946779616).
+- Instalador, ZIP portátil, atualizador interno e checksums estão em [Cobre Desktop 3.13.0](https://github.com/bruncosta077-boop/Cobre/releases/tag/cobre-desktop-v3.13.0). O build local confirmou os mesmos nomes de pacote; binários de lançamento são reconstruídos no CI e não têm assinatura digital de código.
 
 ## 3.12.2 — versão exibida pelo próprio aplicativo
 

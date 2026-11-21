@@ -46,7 +46,7 @@ Em **Configurações → Backup das configurações**, exporte ou restaure prefe
 
 ## Ecossistema Cobre
 
-- [Cobre Mobile](https://github.com/bruncosta077-boop/Cobre-Mobile) — última versão publicada 0.14.0; a descoberta local automática está em desenvolvimento para 0.15.0.
+- [Cobre Mobile](https://github.com/bruncosta077-boop/Cobre-Mobile/releases/tag/mobile-v0.15.0) — versão 0.15.0 pré-release assinada, com descoberta local automática.
 - [Cobre Server](https://github.com/bruncosta077-boop/Cobre-Server/releases/tag/v0.5.0-beta.5) — versão 0.5.0-beta.5; HTTPS opcional com certificado confiável, além de contas, sessões, dispositivos, presença e pareamento Cobre ID.
 - [Cobre TV](https://github.com/bruncosta077-boop/Cobre-TV) — protótipo 0.4.0 em desenvolvimento, com biblioteca Desktop e reprodução direta; descoberta local aguarda validação em TV física.
 
