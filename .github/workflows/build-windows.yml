@@ -77,11 +77,10 @@ jobs:
         with:
           name: Cobre Desktop ${{ github.ref_name }}
           body: |
-            ## Cobre Desktop 3.12.1 — correção do atualizador interno
+            ## Cobre Desktop 3.12.2 — versão exibida pelo próprio aplicativo
 
-            - Corrige a extração do pacote interno para aceitar as fontes e estilos incluídos no novo layout.
-            - A extração continua restrita a caminhos aprovados e preserva a validação do manifesto, hash e recuperação em caso de falha.
-            - Para sair da versão 3.12.0, instale esta versão uma vez pelo instalador ou pelo ZIP portátil. Depois, o atualizador interno volta a funcionar.
+            - Corrige o número da versão no Sobre, no rodapé das configurações e no diagnóstico, consultando o executável instalado.
+            - Mantém as correções do atualizador interno incluídas na versão 3.12.1.
 
             Inclui instalador, ZIP portátil, atualização dentro do app e `checksums-sha256.txt`. O atualizador verifica o SHA-256 e mantém backup para recuperação.
 

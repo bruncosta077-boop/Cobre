@@ -185,7 +185,8 @@ let lines = [], synced = false, li = -1, tab = 'lib', gs = [];
 let mode = localStorage.mode || 'albums', scope = { artist: null, album: null }, net = localStorage.net !== '0';
 const cur = () => q[pos];
 let revs = {}, rvTimer, rvOpen = false;
-const VERSION = '3.11.0';
+let VERSION = '3.12.2';
+api.version().then((version) => { if (/^\d+\.\d+\.\d+(?:[-+][\w.-]+)?$/.test(version)) VERSION = version; }).catch(() => {});
 const rk = (g) => g.artist + '|' + g.album;
 const saveRevs = () => api.revSave(revs);
 const starsHtml = (n) => [1, 2, 3, 4, 5].map((i) => `<span data-s="${i}" class="${i <= n ? 'on' : ''}">★</span>`).join('');
@@ -755,7 +756,8 @@ async function coversCheck() {
   reloadCovers(); toast(`Pronto: ${ok} capas trocadas por versões maiores`);
 }
 
-function aboutDlg() {
+async function aboutDlg() {
+  VERSION = await api.version().catch(() => VERSION);
   const logo = '<svg viewBox="0 0 200 200" width="72" height="72" class="about-logo"><rect width="200" height="200" rx="44" fill="#121110"/><path d="M150.4 139.4 A64 64 0 1 1 150.4 60.6" fill="none" stroke="#c9773f" stroke-width="14" stroke-linecap="round"/><g stroke="#ece6df" stroke-width="7" stroke-linecap="round"><line x1="64" y1="86" x2="64" y2="114"/><line x1="82" y1="71" x2="82" y2="129"/><line x1="100" y1="58" x2="100" y2="142"/><line x1="118" y1="78" x2="118" y2="122"/><line x1="136" y1="89" x2="136" y2="111"/></g></svg>';
   return dlg({
     title: 'Sobre o Cobre',

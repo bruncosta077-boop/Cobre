@@ -1,5 +1,9 @@
 # Histórico de versões — Cobre Desktop
 
+## 3.12.2 — versão exibida pelo próprio aplicativo
+
+- A tela Sobre, o rodapé das configurações e o diagnóstico agora consultam a versão real do executável Electron, eliminando divergência entre o programa instalado e o número mostrado na interface.
+
 ## 3.12.1 — correção do atualizador interno
 
 - Corrigida a extração segura do pacote de atualização para aceitar os arquivos de fonte e estilos locais introduzidos na interface 3.11.

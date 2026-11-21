@@ -414,6 +414,7 @@ ipcMain.handle('health', async () => {
   } catch {}
   return { electron: v.electron, chrome: v.chrome, node: v.node, latest };
 });
+ipcMain.handle('app:version', () => app.getVersion());
 
 const ckey = (p, artist, album) => crypto.createHash('md5').update(`${artist}|${album}|${album ? '' : p}`).digest('hex');
 const CEX = ['.jpg', '.jpeg', '.png', '.webp'];

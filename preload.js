@@ -6,6 +6,7 @@ try {
   }
 } catch {}
 contextBridge.exposeInMainWorld('api', {
+  version: () => ipcRenderer.invoke('app:version'),
   pick: () => ipcRenderer.invoke('pick'),
   cached: (dir) => ipcRenderer.invoke('cached', dir),
   scan: (dir) => ipcRenderer.invoke('scan', dir),
