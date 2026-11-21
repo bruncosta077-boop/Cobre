@@ -1,5 +1,11 @@
 # Histórico de versões — Cobre Desktop
 
+## 3.12.1 — correção do atualizador interno
+
+- Corrigida a extração segura do pacote de atualização para aceitar os arquivos de fonte e estilos locais introduzidos na interface 3.11.
+- O pacote continua limitado aos caminhos explicitamente permitidos e valida o manifesto antes de instalar.
+- Usuários na versão 3.12.0 devem instalar esta versão pelo instalador/ZIP uma vez; as próximas atualizações internas passam a funcionar normalmente.
+
 ## 3.12.0 — diagnóstico de acesso remoto
 
 - Corrigido o erro que mascarava falhas de autorização do Cobre ID como HTTP 503 genérico.

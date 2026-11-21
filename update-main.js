@@ -116,6 +116,9 @@ function validRelative(name) {
 }
 function walkFiles(dir, rel='') { return fs.readdirSync(dir,{withFileTypes:true}).flatMap((e)=>{const p=rel?rel+'/'+e.name:e.name; return e.isDirectory()?walkFiles(path.join(dir,e.name),p):[p];}); }
 
+module.exports.validRelative = validRelative;
+module.exports.extractSafe = extractSafe;
+
 async function extractSafe(zipPath, outDir) {
   const ps=path.join(path.dirname(zipPath),'extract.ps1');
   fs.writeFileSync(ps,EXTRACT_SCRIPT,'utf8');
@@ -127,7 +130,7 @@ const EXTRACT_SCRIPT = String.raw`
 param([string]$ZipPath,[string]$OutDir)
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-$allowed=@('account-preload.js','account.html','account-renderer.js','app.asar','byte-range.js','desktop-pairing-qr.js','host-grant-access.js','mini-renderer.js','cobre-id-client.js','cobre-id-main.js','features-main.js','features.js','icon.ico','icon.png','index.html','main.js','mini-preload.js','mini.html','package.json','preload.js','remote.html','renderer.js','update-main.js','cobre-update.json')
+$allowed=@('account-preload.js','account.html','account-renderer.js','app.asar','byte-range.js','desktop-pairing-qr.js','host-grant-access.js','mini-renderer.js','cobre-id-client.js','cobre-id-main.js','features-main.js','features.js','icon.ico','icon.png','index.html','main.js','mini-preload.js','mini.html','package.json','preload.js','remote.html','renderer.js','update-main.js','styles/tokens.css','styles/fonts.css','styles/app.css','fonts/bricolage-latin.woff2','fonts/bricolage-latin-ext.woff2','fonts/jetbrains-mono-latin.woff2','fonts/jetbrains-mono-latin-ext.woff2','cobre-update.json')
 if(Test-Path -LiteralPath $OutDir){Remove-Item -LiteralPath $OutDir -Recurse -Force}; New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 $z=[IO.Compression.ZipFile]::OpenRead($ZipPath)
 try {
@@ -136,7 +139,7 @@ try {
   foreach($e in $z.Entries){
     $n=$e.FullName.Replace('\','/'); if($n.EndsWith('/')){$n=$n.TrimEnd('/')}
     if(!$n){continue}; $parts=$n.Split('/'); $isDir=$e.FullName.EndsWith('/'); if($parts.Count -gt 8 -or $parts -contains '.' -or $parts -contains '..' -or $n.Contains(':')){throw 'Caminho inválido no pacote.'}
-    if($parts.Count -eq 1){if($isDir){if($n -ne 'node_modules'){throw ('Pasta não permitida: '+$n)}}elseif($n -notin $allowed){throw ('Arquivo não permitido: '+$n)}} elseif($parts[0] -ne 'node_modules' -or $parts.Count -gt 8){throw ('Pasta não permitida: '+$n)}
+    if($parts.Count -eq 1){if($isDir){if($n -notin @('node_modules','fonts','styles')){throw ('Pasta não permitida: '+$n)}}elseif($n -notin $allowed){throw ('Arquivo não permitido: '+$n)}} elseif($n -notin $allowed -and ($parts[0] -ne 'node_modules' -or $parts.Count -gt 8)){throw ('Pasta não permitida: '+$n)}
     if($isDir){continue}; if($seen.ContainsKey($n)){throw 'Arquivo duplicado.'}; $seen[$n]=$true
     $dest=Join-Path $OutDir ($n.Replace('/',[IO.Path]::DirectorySeparatorChar)); $full=[IO.Path]::GetFullPath($dest); $root=[IO.Path]::GetFullPath($OutDir)+[IO.Path]::DirectorySeparatorChar
     if(!$full.StartsWith($root,[StringComparison]::OrdinalIgnoreCase)){throw 'Caminho fora da pasta de atualização.'}
