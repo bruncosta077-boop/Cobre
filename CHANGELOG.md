@@ -1,5 +1,16 @@
 # Histórico de versões — Cobre Desktop
 
+## 3.11.0 — nova experiência visual
+
+- Repaginada a interface com a identidade visual Cobre, navegação lateral e controles de reprodução reunidos numa barra inferior.
+- Criada a tela “Tocando agora”, usada também nos modos de tela cheia e cinema.
+- Preferências organizadas por categorias; controles de áudio reunidos no painel Som, com curva visual do equalizador.
+- Adicionada opção de tema claro, além dos temas escuro e conforme o Windows.
+- Fonte e estilos incluídos localmente para manter a mesma aparência sem depender de recursos externos.
+- Reformuladas as janelas da Conta Cobre, mini player e controle remoto; os pedidos para permitir ou recusar acesso ao Desktop continuam disponíveis na tela da conta.
+- Corrigido o pacote de atualização interno para incluir e aceitar o novo layout, estilos e fontes.
+- Inclui contribuição de [@dilucas00](https://github.com/dilucas00).
+
 ## 3.10.0 — pareamento seguro por QR
 
 - O painel Acesso remoto gera um QR curto com endereço local e identidade do Desktop, sem incluir senha, chave compartilhada ou token.

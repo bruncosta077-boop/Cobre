@@ -9,7 +9,7 @@ const OWNER = 'bruncosta077-boop', REPO = 'Cobre';
 const API = `https://api.github.com/repos/${OWNER}/${REPO}/releases/latest`;
 const ASSET = (v) => `Cobre-Update-v${v}-x64.zip`;
 const MAX_BYTES = 80 * 1024 * 1024;
-const ALLOWED = new Set(['account-preload.js','account.html','account-renderer.js','app.asar','byte-range.js','desktop-pairing-qr.js','host-grant-access.js','mini-renderer.js','cobre-id-client.js','cobre-id-main.js','features-main.js','features.js','icon.ico','icon.png','index.html','main.js','mini-preload.js','mini.html','package.json','preload.js','remote.html','renderer.js','update-main.js']);
+const ALLOWED = new Set(['account-preload.js','account.html','account-renderer.js','app.asar','byte-range.js','desktop-pairing-qr.js','host-grant-access.js','mini-renderer.js','cobre-id-client.js','cobre-id-main.js','features-main.js','features.js','icon.ico','icon.png','index.html','layout.js','main.js','mini-preload.js','mini.html','package.json','preload.js','remote.html','renderer.js','theme.js','styles/tokens.css','styles/fonts.css','styles/app.css','fonts/bricolage-latin.woff2','fonts/bricolage-latin-ext.woff2','fonts/jetbrains-mono-latin.woff2','fonts/jetbrains-mono-latin-ext.woff2','update-main.js']);
 const semver = (v) => { const m = /^v?(\d+)\.(\d+)\.(\d+)$/.exec(String(v || '')); return m ? m.slice(1).map(Number) : null; };
 const newer = (a, b) => { for (let i=0;i<3;i++) { if (a[i] !== b[i]) return a[i] > b[i]; } return false; };
 const safeNotes = (s) => String(s || '').slice(0, 24000);
@@ -112,7 +112,7 @@ module.exports = function initUpdater({ app, ipcMain, getWin }) {
 function validRelative(name) {
   if(typeof name!=='string' || name.length>240 || name.startsWith('/') || name.includes('\\') || name.includes(':')) return false;
   const p=name.split('/'); if(p.some((s)=>!s || s==='.' || s==='..')) return false;
-  return p.length===1 ? (ALLOWED.has(p[0]) || p[0]==='cobre-update.json') : (p[0]==='node_modules' && p.length<=8 && p.every((s)=>/^[a-zA-Z0-9_.@+-]+$/.test(s)));
+  return name==='cobre-update.json' || ALLOWED.has(name) || (p[0]==='node_modules' && p.length<=8 && p.every((s)=>/^[a-zA-Z0-9_.@+-]+$/.test(s)));
 }
 function walkFiles(dir, rel='') { return fs.readdirSync(dir,{withFileTypes:true}).flatMap((e)=>{const p=rel?rel+'/'+e.name:e.name; return e.isDirectory()?walkFiles(path.join(dir,e.name),p):[p];}); }
 

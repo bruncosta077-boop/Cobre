@@ -77,13 +77,16 @@ jobs:
         with:
           name: Cobre Desktop ${{ github.ref_name }}
           body: |
-            Atualização do Cobre Desktop para Windows x64.
+            ## Cobre Desktop 3.11.0 — nova experiência visual
 
-            Inclui instalador, ZIP portátil, pacote de atualização dentro do app e `checksums-sha256.txt`. A atualização automática valida SHA-256, substitui os arquivos corretos conforme o formato da instalação e mantém backup para recuperação.
+            - Interface repaginada com navegação lateral, barra inferior do player e tela “Tocando agora”.
+            - Preferências e áudio reorganizados; novo tema claro, fontes locais e janelas atualizadas.
+            - Conta Cobre continua mostrando e permitindo responder aos pedidos de acesso ao Desktop.
+            - Pacote de atualização interno inclui os novos estilos, fontes e arquivos de layout.
 
-            Instalações 3.5.0 devem receber esta versão uma vez pelo instalador ou ZIP, pois o atualizador antigo não reconhece o novo formato. As próximas versões poderão ser aplicadas dentro do app.
+            Inclui instalador, ZIP portátil, atualização dentro do app e `checksums-sha256.txt`. O atualizador verifica o SHA-256 e mantém backup para recuperação.
 
-            Consulte `CHANGELOG.md` no repositório para as notas completas.
+            Bruno C S Moraes · Contribuição de [@dilucas00](https://github.com/dilucas00).
           prerelease: false
           files: |
             release/Cobre-*-x64.exe

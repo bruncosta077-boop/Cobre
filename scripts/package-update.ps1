@@ -8,13 +8,15 @@ if (!$OutputDirectory) { $OutputDirectory = Join-Path $repo 'release' }
 New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
 $stage = Join-Path $env:TEMP ('cobre-update-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Force -Path $stage | Out-Null
-$appFiles = @('account-preload.js','account.html','account-renderer.js','byte-range.js','host-grant-access.js','cobre-id-client.js','cobre-id-main.js','features-main.js','features.js','icon.ico','icon.png','index.html','main.js','mini-preload.js','mini-renderer.js','mini.html','package.json','preload.js','remote.html','renderer.js','update-main.js')
+$appFiles = @('account-preload.js','account.html','account-renderer.js','byte-range.js','desktop-pairing-qr.js','host-grant-access.js','cobre-id-client.js','cobre-id-main.js','features-main.js','features.js','icon.ico','icon.png','index.html','layout.js','main.js','mini-preload.js','mini-renderer.js','mini.html','package.json','preload.js','remote.html','renderer.js','theme.js','styles/tokens.css','styles/fonts.css','styles/app.css','fonts/bricolage-latin.woff2','fonts/bricolage-latin-ext.woff2','fonts/jetbrains-mono-latin.woff2','fonts/jetbrains-mono-latin-ext.woff2','update-main.js')
 $paths = [System.Collections.Generic.List[string]]::new()
 try {
   foreach ($name in $appFiles) {
     $from = Join-Path $repo $name
     if (!(Test-Path -LiteralPath $from -PathType Leaf)) { throw "Falta o arquivo do app: $name" }
-    Copy-Item -LiteralPath $from -Destination (Join-Path $stage $name) -Force
+    $destination = Join-Path $stage $name
+    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $destination) | Out-Null
+    Copy-Item -LiteralPath $from -Destination $destination -Force
     $paths.Add($name)
   }
   $appAsar = Join-Path $repo 'release/win-unpacked/resources/app.asar'

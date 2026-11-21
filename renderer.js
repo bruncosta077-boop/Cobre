@@ -185,7 +185,7 @@ let lines = [], synced = false, li = -1, tab = 'lib', gs = [];
 let mode = localStorage.mode || 'albums', scope = { artist: null, album: null }, net = localStorage.net !== '0';
 const cur = () => q[pos];
 let revs = {}, rvTimer, rvOpen = false;
-const VERSION = '3.9.0';
+const VERSION = '3.11.0';
 const rk = (g) => g.artist + '|' + g.album;
 const saveRevs = () => api.revSave(revs);
 const starsHtml = (n) => [1, 2, 3, 4, 5].map((i) => `<span data-s="${i}" class="${i <= n ? 'on' : ''}">★</span>`).join('');
