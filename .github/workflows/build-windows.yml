@@ -39,6 +39,8 @@ jobs:
       - name: Build in-app update package
         shell: pwsh
         run: ./scripts/package-update.ps1
+      - name: Test application and verify generated update package
+        run: npm test
       - name: Write SHA-256 checksums
         shell: pwsh
         run: |
@@ -67,25 +69,33 @@ jobs:
       contents: write
       actions: read
     steps:
+      - name: Checkout release notes
+        uses: actions/checkout@v4
       - name: Download verified Windows packages
         uses: actions/download-artifact@v4
         with:
           name: Cobre-Desktop-Windows-x64
           path: release
+      - name: Prepare release notes from changelog
+        shell: pwsh
+        run: |
+          $version = $env:GITHUB_REF_NAME -replace '^cobre-desktop-v', ''
+          $text = Get-Content -LiteralPath CHANGELOG.md -Raw
+          $pattern = '(?ms)^##\s+' + [regex]::Escape($version) + '[^\r\n]*\r?\n(.*?)(?=^##\s|\z)'
+          $match = [regex]::Match($text, $pattern)
+          if (!$match.Success) { throw "Não encontrei as notas do Desktop $version no CHANGELOG.md." }
+          @(
+            "# Cobre Desktop $version"
+            ''
+            $match.Groups[1].Value.Trim()
+            ''
+            'Desenvolvimento principal: Bruno C S Moraes · Contribuição: [@dilucas00](https://github.com/dilucas00).'
+          ) | Set-Content -LiteralPath release-notes.md -Encoding UTF8
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
         with:
           name: Cobre Desktop ${{ github.ref_name }}
-          body: |
-            ## Cobre Desktop 3.13.0 — descoberta local do Mobile e da TV
-
-            - Anuncia o Desktop na rede local quando o acesso remoto e Cobre ID estão ativos, permitindo ao Mobile e à TV localizá-lo sem digitar endereço.
-            - O anúncio contém somente identidade e versão do protocolo; acesso continua exigindo concessão Cobre ID e aprovação no Desktop.
-            - O áudio continua sendo transmitido diretamente do Desktop para o aparelho.
-
-            Inclui instalador, ZIP portátil, atualização dentro do app e `checksums-sha256.txt`. O atualizador verifica o SHA-256 e mantém backup para recuperação.
-
-            Bruno C S Moraes · Contribuição de [@dilucas00](https://github.com/dilucas00).
+          body_path: release-notes.md
           prerelease: false
           files: |
             release/Cobre-*-x64.exe

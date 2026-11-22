@@ -1,6 +1,6 @@
 {
   "name": "cobre-desktop",
-  "version": "3.13.0",
+  "version": "3.14.0",
   "description": "Cobre, reprodutor de música local",
   "main": "main.js",
   "author": "Bruno C S Moraes",
@@ -17,7 +17,7 @@
     "qrcode": "^1.5.4"
   },
   "devDependencies": {
-    "electron": "45.3.4",
+    "electron": "45.4.1",
     "electron-builder": "26.18.1"
   },
   "build": {

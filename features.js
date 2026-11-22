@@ -533,18 +533,20 @@ FXH('gear', () => {
   };
 });
 let updateBusy = false;
-async function updateDlg() {
-  toast('Verificando atualizações do Cobre…', true);
-  const check = await api.ipc.invoke('cobreUpdateCheck').catch((e) => ({ok:false,error:String(e.message||e)}));
-  $('#toast').hidden = true;
+async function updateDlg(prefetchedCheck = null) {
+  if (!prefetchedCheck) toast('Verificando atualizações do Cobre…', true);
+  const check = prefetchedCheck || await api.ipc.invoke('cobreUpdateCheck').catch((e) => ({ok:false,error:String(e.message||e)}));
+  if (!prefetchedCheck) $('#toast').hidden = true;
   if (!check.ok) return dlg({title:'Atualizar Cobre',text:check.error||'Não consegui verificar agora.',buttons:[{label:'Fechar',v:true}]});
+  localStorage.lastUpdateCheck = String(Date.now());
   const d=check.data;
   if(d.readyToInstall){const go=await dlg({title:`Cobre ${d.version} pronto`,text:'A atualização já foi baixada e verificada.',buttons:[{label:'Depois',v:false},{label:'Instalar e reiniciar',v:true}]});if(go.v){const r=await api.ipc.invoke('cobreUpdateInstall').catch((e)=>({ok:false,error:String(e.message||e)}));if(!r.ok)dlg({title:'Instalação não iniciada',text:r.error,buttons:[{label:'Fechar',v:true}]});}return;}
   if(!d.updateAvailable) return dlg({title:'Cobre atualizado',text:d.current===d.version?`Você está usando a versão mais recente (${d.current}).`:`Não há atualização pública posterior. Esta cópia (${d.current}) está mais nova que a última versão publicada (${d.version}).`,buttons:[{label:'Fechar',v:true}]});
   const notes=esc(d.notes||'Esta versão não publicou notas de atualização.').slice(0,24000);
   if(!d.supported) return dlg({title:'Atualização não disponível nesta edição',text:'A atualização direta funciona na edição portátil descompactada do Cobre. Baixe e instale a edição atualizada pelo canal de distribuição.',buttons:[{label:'Fechar',v:true}]});
   if(!d.packageAvailable) return dlg({title:`Cobre ${d.version} disponível`,html:`<p>Esta versão foi publicada, mas ainda não tem o pacote de atualização interna.</p><p class="mu">Por enquanto, atualize pelo pacote completo. Quando o ZIP de atualização for anexado à release, o Cobre poderá instalá-lo diretamente aqui.</p><div class="notes">${notes}</div>`,buttons:[{label:'Fechar',v:true}]});
-  const choice=await dlg({title:`Atualização ${d.version}`,html:`<p>Versão atual: ${d.current} · Download: ${(d.size/1048576).toFixed(1)} MB</p><p class="mu">Notas da versão</p><div class="notes">${notes}</div>`,buttons:[{label:'Agora não',v:false},{label:'Baixar atualização',v:'download'}]});
+  const sizeLabel=d.size>0?`${(d.size/1048576).toFixed(1)} MB`:'até 80 MB';
+  const choice=await dlg({title:`Atualização ${d.version}`,html:`<p>Versão atual: ${d.current} · Download: ${sizeLabel}</p><p class="mu">Notas da versão</p><div class="notes">${notes}</div>`,buttons:[{label:'Agora não',v:false},{label:'Baixar atualização',v:'download'}]});
   if(choice.v!=='download') return;
   updateBusy=true; toast('Preparando download da atualização…',true);
   const downloaded=await api.ipc.invoke('cobreUpdateDownload',d.version).catch((e)=>({ok:false,error:String(e.message||e)}));
@@ -555,8 +557,15 @@ async function updateDlg() {
   const started=await api.ipc.invoke('cobreUpdateInstall').catch((e)=>({ok:false,error:String(e.message||e)}));
   if(!started.ok) dlg({title:'Instalação não iniciada',text:started.error||'Tente novamente.',buttons:[{label:'Fechar',v:true}]});
 }
+setTimeout(async()=>{
+  if (Date.now() - (Number(localStorage.lastUpdateCheck) || 0) < 24 * 60 * 60 * 1000) return;
+  const check = await api.ipc.invoke('cobreUpdateCheck').catch(() => null);
+  if (!check?.ok) return;
+  localStorage.lastUpdateCheck = String(Date.now());
+  if (check.data?.updateAvailable) updateDlg(check);
+}, 12_000);
 FXH('updates', () => {
-  api.ipc.on('cobreUpdateProgress',(p)=>{if(updateBusy)toast(`Baixando atualização… ${p.percent}%`,true);});
+  api.ipc.on('cobreUpdateProgress',(p)=>{if(updateBusy)toast(p.total?`Baixando atualização… ${p.percent}%`:`Baixando atualização… ${(p.received/1048576).toFixed(1)} MB`,true);});
   api.ipc.invoke('cobreUpdateTakeNotice').then((n)=>{
     if(!n)return;
     if(n.kind==='installed') dlg({title:`Cobre atualizado · ${n.version}`,html:`<p>A atualização foi instalada com sucesso.</p><p class="mu">O que mudou</p><div class="notes">${esc(n.notes||'Sem notas nesta versão.').slice(0,24000)}</div>`,buttons:[{label:'Continuar',v:true}]});

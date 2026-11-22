@@ -97,7 +97,7 @@ async function migrateLegacyPreferences() {
 const mediaById = new Map();
 const mediaIdByPath = new Map();
 const APP_FILES = new Set([
-  'index.html', 'renderer.js', 'features.js', 'mini.html', 'mini-renderer.js', 'account.html', 'account-renderer.js',
+  'index.html', 'renderer.js', 'playback-duration.js', 'features.js', 'mini.html', 'mini-renderer.js', 'account.html', 'account-renderer.js',
   'theme.js', 'layout.js', 'styles/tokens.css', 'styles/fonts.css', 'styles/app.css',
   'fonts/bricolage-latin.woff2', 'fonts/bricolage-latin-ext.woff2', 'fonts/jetbrains-mono-latin.woff2', 'fonts/jetbrains-mono-latin-ext.woff2'
 ]);

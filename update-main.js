@@ -7,12 +7,37 @@ const { spawn } = require('child_process');
 
 const OWNER = 'bruncosta077-boop', REPO = 'Cobre';
 const API = `https://api.github.com/repos/${OWNER}/${REPO}/releases/latest`;
+const FEED = `https://github.com/${OWNER}/${REPO}/releases.atom`;
 const ASSET = (v) => `Cobre-Update-v${v}-x64.zip`;
 const MAX_BYTES = 80 * 1024 * 1024;
-const ALLOWED = new Set(['account-preload.js','account.html','account-renderer.js','app.asar','byte-range.js','desktop-discovery.js','desktop-pairing-qr.js','host-grant-access.js','mini-renderer.js','cobre-id-client.js','cobre-id-main.js','features-main.js','features.js','icon.ico','icon.png','index.html','layout.js','main.js','mini-preload.js','mini.html','package.json','preload.js','remote.html','renderer.js','theme.js','styles/tokens.css','styles/fonts.css','styles/app.css','fonts/bricolage-latin.woff2','fonts/bricolage-latin-ext.woff2','fonts/jetbrains-mono-latin.woff2','fonts/jetbrains-mono-latin-ext.woff2','update-main.js']);
+const ALLOWED = new Set(['account-preload.js','account.html','account-renderer.js','app.asar','byte-range.js','desktop-discovery.js','desktop-pairing-qr.js','host-grant-access.js','mini-renderer.js','cobre-id-client.js','cobre-id-main.js','features-main.js','features.js','icon.ico','icon.png','index.html','layout.js','main.js','mini-preload.js','mini.html','package.json','playback-duration.js','preload.js','remote.html','renderer.js','theme.js','styles/tokens.css','styles/fonts.css','styles/app.css','fonts/bricolage-latin.woff2','fonts/bricolage-latin-ext.woff2','fonts/jetbrains-mono-latin.woff2','fonts/jetbrains-mono-latin-ext.woff2','update-main.js']);
 const semver = (v) => { const m = /^v?(\d+)\.(\d+)\.(\d+)$/.exec(String(v || '')); return m ? m.slice(1).map(Number) : null; };
 const newer = (a, b) => { for (let i=0;i<3;i++) { if (a[i] !== b[i]) return a[i] > b[i]; } return false; };
 const safeNotes = (s) => String(s || '').slice(0, 24000);
+
+function parseLatestDesktopReleaseAtom(xml) {
+  const decode = (s) => String(s || '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&amp;/g, '&');
+  const entries = [...String(xml || '').matchAll(/<entry\b[^>]*>([\s\S]*?)<\/entry>/gi)];
+  for (const [, entry] of entries) {
+    const linkTags = [...entry.matchAll(/<link\b[^>]*>/gi)].map(([tag]) => tag);
+    const href = linkTags.find((tag) => /\brel="alternate"/i.test(tag))?.match(/\bhref="([^"]+)"/i)?.[1] || '';
+    const tag = /\/releases\/tag\/(cobre-desktop-v\d+\.\d+\.\d+)(?:[/?#]|$)/i.exec(href)?.[1];
+    if (!tag) continue;
+    const version = /^cobre-desktop-v(\d+\.\d+\.\d+)$/i.exec(tag)?.[1];
+    if (!version) continue;
+    const content = /<content\b[^>]*>([\s\S]*?)<\/content>/i.exec(entry)?.[1] || '';
+    const notes = decode(content).replace(/<[^>]*>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+    const publishedAt = /<updated>([^<]+)<\/updated>/i.exec(entry)?.[1] || '';
+    return { tag, version, notes: safeNotes(notes), publishedAt };
+  }
+  return null;
+}
+
+function parseAssetSha256(checksums, assetName) {
+  const escaped = String(assetName).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = new RegExp(`^([a-f0-9]{64})\\s+\\*?${escaped}\\s*$`, 'im').exec(String(checksums || ''));
+  return match ? `sha256:${match[1].toLowerCase()}` : '';
+}
 
 module.exports = function initUpdater({ app, ipcMain, getWin }) {
   let ready = null, busy = false;
@@ -23,14 +48,48 @@ module.exports = function initUpdater({ app, ipcMain, getWin }) {
   const stateFile = () => path.join(app.getPath('userData'), 'update-installed.json');
   const send = (channel, data) => { const w=getWin(); if(w && !w.isDestroyed()) w.webContents.send(channel,data); };
 
+  async function releaseChecksum(tag, assetName) {
+    const url = `https://github.com/${OWNER}/${REPO}/releases/download/${encodeURIComponent(tag)}/checksums-sha256.txt`;
+    try {
+      const r = await fetch(url, { headers: { 'User-Agent': 'Cobre-Desktop-Updater' }, signal: AbortSignal.timeout(15000), redirect: 'follow' });
+      if (!r.ok || !['github.com', 'release-assets.githubusercontent.com'].includes(new URL(r.url).hostname)) return '';
+      return parseAssetSha256((await r.text()).slice(0, 32_000), assetName);
+    } catch { return ''; }
+  }
+
+  async function releaseInfoFromFeed() {
+    const r = await fetch(FEED, { headers: { 'User-Agent': 'Cobre-Desktop-Updater', Accept: 'application/atom+xml' }, signal: AbortSignal.timeout(15000) });
+    if (!r.ok) throw new Error(`A lista alternativa de versões respondeu HTTP ${r.status}.`);
+    const release = parseLatestDesktopReleaseAtom((await r.text()).slice(0, 2_000_000));
+    if (!release) throw new Error('Não encontrei uma release do Desktop na lista pública do GitHub.');
+    const current = app.getVersion(), assetName = ASSET(release.version);
+    const digest = await releaseChecksum(release.tag, assetName);
+    const available = newer(semver(release.version), semver(current) || [0, 0, 0]);
+    const asset = digest ? {
+      url: `https://github.com/${OWNER}/${REPO}/releases/download/${encodeURIComponent(release.tag)}/${encodeURIComponent(assetName)}`,
+      size: 0,
+      digest,
+    } : null;
+    return {
+      current, version: release.version, updateAvailable: available,
+      packageAvailable: supportsPatch && !!asset, supported: supportsPatch,
+      packageName: asset ? assetName : '', size: 0, notes: release.notes,
+      publishedAt: release.publishedAt, asset,
+    };
+  }
+
   async function releaseInfo() {
     const r = await fetch(API, { headers: { 'User-Agent': 'Cobre-Desktop-Updater', Accept: 'application/vnd.github+json' }, signal: AbortSignal.timeout(15000) });
+    if (r.status === 403 || r.status === 429) return releaseInfoFromFeed();
     if (!r.ok) throw new Error(r.status === 404 ? 'Ainda não há uma versão pública do Cobre.' : `GitHub respondeu com erro ${r.status}.`);
     const j = await r.json(), tag = /^cobre-desktop-v(\d+\.\d+\.\d+)$/.exec(j.tag_name || ''), version = tag && tag[1];
     if (!version || !semver(version)) throw new Error('A versão publicada no GitHub tem um formato inválido.');
     const current = app.getVersion(), available = newer(semver(version), semver(current) || [0,0,0]);
     const asset = (j.assets || []).find((a) => a.name === ASSET(version));
-    return { current, version, updateAvailable: available, packageAvailable: supportsPatch && !!asset && asset.size <= MAX_BYTES, supported: supportsPatch, packageName: asset ? asset.name : '', size: asset ? asset.size : 0, notes: safeNotes(j.body), publishedAt: j.published_at || '', asset: asset && { url: asset.browser_download_url, size: asset.size, digest: asset.digest || '' } };
+    let digest = asset?.digest || '';
+    if (asset && !/^sha256:[0-9a-f]{64}$/i.test(digest)) digest = await releaseChecksum(j.tag_name, asset.name);
+    const validAsset = !!asset && asset.size <= MAX_BYTES && /^sha256:[0-9a-f]{64}$/i.test(digest);
+    return { current, version, updateAvailable: available, packageAvailable: supportsPatch && validAsset, supported: supportsPatch, packageName: asset ? asset.name : '', size: asset ? asset.size : 0, notes: safeNotes(j.body), publishedAt: j.published_at || '', asset: asset && { url: asset.browser_download_url, size: asset.size, digest } };
   }
 
   ipcMain.handle('cobreUpdateCheck', async () => {
@@ -46,6 +105,7 @@ module.exports = function initUpdater({ app, ipcMain, getWin }) {
       if (!supportsPatch) throw new Error('Não reconheci o formato desta instalação do Cobre.');
       if (!info.updateAvailable || info.version !== requestedVersion) throw new Error('A versão disponível mudou. Verifique as atualizações novamente.');
       if (!info.packageAvailable) throw new Error('A release ainda não tem o pacote portátil de atualização.');
+      assertUpdateTargetWritable(packagedAsar ? process.resourcesPath : __dirname);
       if (!info.asset.url.startsWith(`https://github.com/${OWNER}/${REPO}/releases/download/`)) throw new Error('O endereço do pacote não é confiável.');
       const digest = /^sha256:([0-9a-f]{64})$/i.exec(info.asset.digest);
       if (!digest) throw new Error('A publicação não tem uma soma SHA-256 válida; a atualização foi cancelada.');
@@ -55,12 +115,14 @@ module.exports = function initUpdater({ app, ipcMain, getWin }) {
       if (!r.ok || !r.body) throw new Error(`O download falhou (HTTP ${r.status}).`);
       const finalHost = new URL(r.url).hostname;
       if (!['github.com','release-assets.githubusercontent.com'].includes(finalHost)) throw new Error('O download foi redirecionado para um endereço inesperado.');
-      const declared = Number(r.headers.get('content-length') || info.asset.size);
-      if (declared !== info.asset.size || declared > MAX_BYTES) throw new Error('O tamanho do pacote não corresponde ao publicado.');
+      const headerSize = Number(r.headers.get('content-length') || 0);
+      const expectedSize = Number(info.asset.size) || 0;
+      if ((expectedSize && headerSize && headerSize !== expectedSize) || headerSize > MAX_BYTES || expectedSize > MAX_BYTES) throw new Error('O tamanho do pacote não corresponde ao publicado.');
+      const progressSize = headerSize || expectedSize;
       const chunks = []; let total=0; const hash=crypto.createHash('sha256');
-      for await (const chunk of r.body) { total+=chunk.length; if(total>MAX_BYTES) throw new Error('O pacote ultrapassa o limite permitido.'); chunks.push(Buffer.from(chunk)); hash.update(chunk); send('cobreUpdateProgress',{percent:Math.min(99,Math.round(total/info.asset.size*100)),received:total,total:info.asset.size}); }
+      for await (const chunk of r.body) { total+=chunk.length; if(total>MAX_BYTES) throw new Error('O pacote ultrapassa o limite permitido.'); chunks.push(Buffer.from(chunk)); hash.update(chunk); send('cobreUpdateProgress',{percent:progressSize?Math.min(99,Math.round(total/progressSize*100)):0,received:total,total:progressSize}); }
       const buffer=Buffer.concat(chunks);
-      if(total!==info.asset.size || hash.digest('hex').toLowerCase()!==digest[1].toLowerCase()) throw new Error('A verificação de integridade falhou. Nenhum arquivo foi instalado.');
+      if((expectedSize && total!==expectedSize) || (headerSize && total!==headerSize) || hash.digest('hex').toLowerCase()!==digest[1].toLowerCase()) throw new Error('A verificação de integridade falhou. Nenhum arquivo foi instalado.');
       fs.writeFileSync(zipPath, buffer, { flag: 'wx' });
       await extractSafe(zipPath, stage);
       const manifestPath=path.join(stage,'cobre-update.json');
@@ -80,7 +142,7 @@ module.exports = function initUpdater({ app, ipcMain, getWin }) {
         installFiles = [...names].filter((name) => name !== 'app.asar'); target = __dirname;
       }
       ready={version:info.version,notes:info.notes,stage,files:installFiles,zipPath,target};
-      send('cobreUpdateProgress',{percent:100,received:total,total:info.asset.size});
+      send('cobreUpdateProgress',{percent:100,received:total,total:progressSize||total});
       return { ok:true, data:{version:ready.version,notes:ready.notes} };
     } catch(e) { ready=null; return {ok:false,error:e.message||'O download da atualização falhou.'}; }
     finally { busy=false; }
@@ -114,10 +176,23 @@ function validRelative(name) {
   const p=name.split('/'); if(p.some((s)=>!s || s==='.' || s==='..')) return false;
   return name==='cobre-update.json' || ALLOWED.has(name) || (p[0]==='node_modules' && p.length<=8 && p.every((s)=>/^[a-zA-Z0-9_.@+-]+$/.test(s)));
 }
+function assertUpdateTargetWritable(target) {
+  const probe = path.join(target, `.cobre-write-check-${process.pid}-${crypto.randomBytes(6).toString('hex')}`);
+  try {
+    fs.writeFileSync(probe, 'ok', { flag: 'wx' });
+    fs.unlinkSync(probe);
+  } catch {
+    try { fs.rmSync(probe, { force: true }); } catch {}
+    throw new Error('Esta instalação está numa pasta sem permissão para atualizar. Reinstale o Cobre na pasta do seu usuário; depois, o atualizador interno poderá gravar as próximas versões.');
+  }
+}
 function walkFiles(dir, rel='') { return fs.readdirSync(dir,{withFileTypes:true}).flatMap((e)=>{const p=rel?rel+'/'+e.name:e.name; return e.isDirectory()?walkFiles(path.join(dir,e.name),p):[p];}); }
 
 module.exports.validRelative = validRelative;
 module.exports.extractSafe = extractSafe;
+module.exports.parseLatestDesktopReleaseAtom = parseLatestDesktopReleaseAtom;
+module.exports.parseAssetSha256 = parseAssetSha256;
+module.exports.assertUpdateTargetWritable = assertUpdateTargetWritable;
 
 async function extractSafe(zipPath, outDir) {
   const ps=path.join(path.dirname(zipPath),'extract.ps1');
@@ -130,7 +205,7 @@ const EXTRACT_SCRIPT = String.raw`
 param([string]$ZipPath,[string]$OutDir)
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-$allowed=@('account-preload.js','account.html','account-renderer.js','app.asar','byte-range.js','desktop-discovery.js','desktop-pairing-qr.js','host-grant-access.js','mini-renderer.js','cobre-id-client.js','cobre-id-main.js','features-main.js','features.js','icon.ico','icon.png','index.html','main.js','mini-preload.js','mini-renderer.js','mini.html','package.json','preload.js','remote.html','renderer.js','update-main.js','styles/tokens.css','styles/fonts.css','styles/app.css','fonts/bricolage-latin.woff2','fonts/bricolage-latin-ext.woff2','fonts/jetbrains-mono-latin.woff2','fonts/jetbrains-mono-latin-ext.woff2','cobre-update.json')
+$allowed=@('account-preload.js','account.html','account-renderer.js','app.asar','byte-range.js','desktop-discovery.js','desktop-pairing-qr.js','host-grant-access.js','mini-renderer.js','cobre-id-client.js','cobre-id-main.js','features-main.js','features.js','icon.ico','icon.png','index.html','layout.js','main.js','mini-preload.js','mini.html','package.json','playback-duration.js','preload.js','remote.html','renderer.js','theme.js','update-main.js','styles/tokens.css','styles/fonts.css','styles/app.css','fonts/bricolage-latin.woff2','fonts/bricolage-latin-ext.woff2','fonts/jetbrains-mono-latin.woff2','fonts/jetbrains-mono-latin-ext.woff2','cobre-update.json')
 if(Test-Path -LiteralPath $OutDir){Remove-Item -LiteralPath $OutDir -Recurse -Force}; New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 $z=[IO.Compression.ZipFile]::OpenRead($ZipPath)
 try {
@@ -148,6 +223,11 @@ try {
   }
 } finally {$z.Dispose()}
 `;
+
+module.exports.extractorAllowedPaths = () => {
+  const source = /\$allowed=@\(([^)]*)\)/.exec(EXTRACT_SCRIPT)?.[1] || '';
+  return [...source.matchAll(/'([^']+)'/g)].map(([, name]) => name);
+};
 
 const INSTALL_SCRIPT = String.raw`
 param([string]$ArgsPath)

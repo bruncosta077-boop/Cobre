@@ -151,7 +151,7 @@ function advance() {
 
 function schedule() {
   countPlay();
-  const nx = q[pos + 1], rem = audio.duration - audio.currentTime;
+  const nx = q[pos + 1], rem = playbackDuration() - audio.currentTime;
   if (fx.tr === 'off' || !nx || !isFinite(rem)) return;
   if (rem < 15 && (!nxt || nxt.t !== nx)) {
     const d = decks[1 - act];
@@ -184,8 +184,9 @@ let lib = [], view = [], q = [], pos = -1, shuffle = false, repeat = false, seek
 let lines = [], synced = false, li = -1, tab = 'lib', gs = [];
 let mode = localStorage.mode || 'albums', scope = { artist: null, album: null }, net = localStorage.net !== '0';
 const cur = () => q[pos];
+const playbackDuration = () => window.CobrePlaybackDuration.effectiveDuration(audio.duration, cur()?.dur);
 let revs = {}, rvTimer, rvOpen = false;
-let VERSION = '3.13.0';
+let VERSION = '3.14.0';
 api.version().then((version) => { if (/^\d+\.\d+\.\d+(?:[-+][\w.-]+)?$/.test(version)) VERSION = version; }).catch(() => {});
 const rk = (g) => g.artist + '|' + g.album;
 const saveRevs = () => api.revSave(revs);
@@ -398,20 +399,24 @@ async function devices() {
 audio.onplay = () => { applyCrackle(); $('#play').innerHTML = icon('pause'); $('#play').setAttribute('aria-label', 'Pausar'); };
 audio.onpause = () => { clearTimeout(swapTimer); swapTimer = null; applyCrackle(); $('#play').innerHTML = icon('play'); $('#play').setAttribute('aria-label', 'Tocar'); };
 audio.onended = () => next(true);
+const refreshDuration = () => { $('#tot').textContent = fmt(playbackDuration()) || '0:00'; };
+audio.onloadedmetadata = refreshDuration;
+audio.ondurationchange = refreshDuration;
 audio.ontimeupdate = () => {
   $('#cur').textContent = fmt(audio.currentTime) || '0:00';
-  $('#tot').textContent = fmt(audio.duration) || '0:00';
-  if (!seeking && audio.duration) { $('#seek').value = audio.currentTime / audio.duration * 1000; fill($('#seek')); }
+  const duration = playbackDuration();
+  $('#tot').textContent = fmt(duration) || '0:00';
+  if (!seeking && duration) { $('#seek').value = audio.currentTime / duration * 1000; fill($('#seek')); }
   syncLyrics();
   schedule();
 };
 
-['onplay', 'onpause', 'onended', 'ontimeupdate'].forEach((k) => {
+['onplay', 'onpause', 'onended', 'onloadedmetadata', 'ondurationchange', 'ontimeupdate'].forEach((k) => {
   const f = audio[k];
   decks.forEach((d) => { d.el[k] = () => { if (d.el === audio) f(); }; });
 });
 $('#seek').oninput = () => { seeking = true; fill($('#seek')); };
-$('#seek').onchange = () => { if (audio.duration) audio.currentTime = $('#seek').value / 1000 * audio.duration; seeking = false; };
+$('#seek').onchange = () => { const duration = playbackDuration(); if (duration) audio.currentTime = $('#seek').value / 1000 * duration; seeking = false; };
 $('#vol').oninput = (e) => { master.gain.value = e.target.value / 100; localStorage.vol = e.target.value; fill(e.target); };
 api.ipc.on('miniVolume', (value) => { $('#vol').value = value; master.gain.value = value / 100; localStorage.vol = value; fill($('#vol')); });
 $('#out').onchange = async (e) => { try { await ctx.setSinkId(e.target.value); localStorage.dev = e.target.value; } catch {} };

@@ -1,5 +1,15 @@
 # Histórico de versões — Cobre Desktop
 
+## 3.14.0 — atualização confiável e manutenção do player
+
+- O tempo total, a barra de busca e a transição entre faixas usam a duração lida dos metadados do arquivo quando o elemento de áudio do Chromium ainda não informa uma duração finita. Isso evita mostrar `0:00` durante a reprodução e mantém a navegação da faixa disponível.
+- O app verifica atualizações automaticamente ao abrir, no máximo uma vez a cada 24 horas; quando encontra uma versão nova, mostra as notas e pede confirmação antes de baixar ou instalar.
+- Se a API REST do GitHub retornar 403/429 por limite de consultas, o atualizador consulta o feed público de releases e valida o arquivo pelo checksum SHA-256 publicado.
+- Antes de baixar, o atualizador verifica se o usuário pode gravar na pasta do aplicativo e explica como corrigir uma instalação em pasta protegida. A atualização mantém backup e recuperação existentes.
+- Corrigida a lista segura do extrator para reconhecer `layout.js` e `theme.js`; as listas de validação JavaScript e extração PowerShell agora são comparadas por teste, evitando que uma versão aprovada pelo manifesto falhe ao ser extraída.
+- Atualizado Electron de 45.3.4 para 45.4.1, incorporando correções da série estável mais recente na data desta versão.
+- `npm test`: 21 testes passaram, incluindo a extração do ZIP incremental 3.14.0 pelo extrator real do app; `npm audit --audit-level=moderate`: zero vulnerabilidades.
+
 ## 3.13.0 — descoberta local para Mobile e TV
 
 - Com o acesso remoto ativo e o Cobre ID conectado, o Desktop anuncia seu identificador e as versões de protocolo por mDNS na rede local.
