@@ -6,7 +6,8 @@
 - O atualizador faz uma checagem silenciosa ao abrir no máximo uma vez por dia; se houver uma versão nova, mostra notas e pede confirmação. API GitHub 403/429 agora tem alternativa por feed Atom público, conferindo checksum SHA-256 da release antes de aceitar o pacote.
 - Antes de baixar a atualização, a aplicação testa a permissão de escrita e explica a reinstalação na pasta do usuário quando a instalação está protegida. O teste confirma que a verificação não deixa arquivo residual.
 - Atualizado Electron 45.3.4 → 45.4.1, release estável de 18/11/2026, com Chromium 156.0.8078.100 e Node 24.22.3. Fonte: [Electron Releases](https://releases.electronjs.org/?channel=stable).
-- `npm test`: 21 testes passaram, incluindo extração real do ZIP incremental; `npm audit --audit-level=moderate`: zero vulnerabilidades. `npm run dist` gerou instalador e ZIP. A conferência do pacote revelou divergências para `layout.js` e `theme.js` e uma entrada duplicada de `mini-renderer.js`; as listas foram alinhadas e agora o teste do workflow verifica o ZIP recém-gerado. CI e release pública ainda pendentes.
+- `npm test`: 21 testes passaram, incluindo extração real do ZIP incremental; `npm audit --audit-level=moderate`: zero vulnerabilidades. `npm run dist` gerou instalador e ZIP. A conferência do pacote revelou divergências para `layout.js` e `theme.js` e uma entrada duplicada de `mini-renderer.js`; as listas foram alinhadas e o teste do workflow verifica o ZIP recém-gerado.
+- CI de publicação concluído no [run 45065209437](https://github.com/bruncosta077-boop/Cobre/actions/runs/45065209437); release pública [Cobre Desktop 3.14.0](https://github.com/bruncosta077-boop/Cobre/releases/tag/cobre-desktop-v3.14.0), com instalador, ZIP portátil, pacote de atualização e checksums SHA-256.
 - Os executáveis Windows continuam sem assinatura Authenticode; o build registra explicitamente que nenhum certificado está configurado.
 
 ## 2026-11-21 — descoberta mDNS 3.13.0

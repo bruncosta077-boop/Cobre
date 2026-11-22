@@ -9,6 +9,7 @@
 - Corrigida a lista segura do extrator para reconhecer `layout.js` e `theme.js`; as listas de validação JavaScript e extração PowerShell agora são comparadas por teste, evitando que uma versão aprovada pelo manifesto falhe ao ser extraída.
 - Atualizado Electron de 45.3.4 para 45.4.1, incorporando correções da série estável mais recente na data desta versão.
 - `npm test`: 21 testes passaram, incluindo a extração do ZIP incremental 3.14.0 pelo extrator real do app; `npm audit --audit-level=moderate`: zero vulnerabilidades.
+- Publicada em [Cobre Desktop 3.14.0](https://github.com/bruncosta077-boop/Cobre/releases/tag/cobre-desktop-v3.14.0); [CI de publicação concluído](https://github.com/bruncosta077-boop/Cobre/actions/runs/45065209437). A release inclui instalador, ZIP portátil, pacote de atualização e checksums SHA-256.
 
 ## 3.13.0 — descoberta local para Mobile e TV
 
