@@ -21,6 +21,10 @@ Os pacotes públicos mais recentes estão na [página de lançamentos](https://g
 
 Este repositório contém somente o código-fonte do Cobre Desktop. O aplicativo usa Electron e toca a biblioteca de música local no Windows.
 
+## Licença
+
+O código do Cobre é proprietário e está disponível publicamente para inspeção. Consulte o [aviso de licença](LICENSE); componentes de terceiros mantêm suas próprias licenças.
+
 ## Executar o código-fonte
 
 Requer Node.js e npm:
