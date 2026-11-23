@@ -116,6 +116,21 @@ test('the unpacked-install update passes the same manifest validation the app ru
   assert.ok(!names.has('app.asar'), 'unpacked installs do not receive app.asar');
 });
 
+// O instalador da atualização precisa continuar rodando depois que o processo que o lançou termina.
+// Antes, um PowerShell lançado com detached saía na hora sem rodar o script, e nenhuma atualização era instalada.
+test('update installer launcher survives the app process exiting', { skip: process.platform !== 'win32' }, async (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'cobre-launch-test-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const script = path.join(root, 'install.ps1'), argPath = path.join(root, 'install.json');
+  fs.writeFileSync(script, 'param([string]$A)\nStart-Sleep -Milliseconds 1500\nSet-Content -LiteralPath ($A + ".feito") -Value $PID\n');
+  fs.writeFileSync(argPath, '{}');
+  // um processo à parte faz o papel do app: lança o instalador e termina em seguida
+  execFileSync(process.execPath, ['-e', `require(${JSON.stringify(path.join(__dirname, 'update-main.js'))}).launchInstaller(${JSON.stringify(script)}, ${JSON.stringify(argPath)})`]);
+  const done = argPath + '.feito';
+  for (let i = 0; i < 150 && !fs.existsSync(done); i++) await new Promise((r) => setTimeout(r, 100));
+  assert.ok(fs.existsSync(done), 'o script de instalação rodou depois que o processo do app terminou');
+});
+
 test('installed manifest validation rejects entries outside the allowed layout', (t) => {
   const stage = fs.mkdtempSync(path.join(os.tmpdir(), 'cobre-update-manifest-test-'));
   t.after(() => fs.rmSync(stage, { recursive: true, force: true }));

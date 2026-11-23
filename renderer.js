@@ -187,7 +187,7 @@ let mode = localStorage.mode || 'albums', scope = { artist: null, album: null },
 const cur = () => q[pos];
 const playbackDuration = () => window.CobrePlaybackDuration.effectiveDuration(audio.duration, cur()?.dur);
 let revs = {}, rvTimer, rvOpen = false;
-let VERSION = '3.17.0';
+let VERSION = '3.17.1';
 api.version().then((version) => { if (/^\d+\.\d+\.\d+(?:[-+][\w.-]+)?$/.test(version)) VERSION = version; }).catch(() => {});
 const rk = (g) => g.artist + '|' + g.album;
 const saveRevs = () => api.revSave(revs);

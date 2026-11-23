@@ -1,5 +1,16 @@
 # Histórico de versões — Cobre Desktop
 
+## 3.17.1 — atualização dentro do app instala de verdade
+
+- A atualização dentro do app baixava e verificava a versão nova, fechava o Cobre e não instalava nada. O instalador era lançado como um PowerShell sem console, e nesse modo o Windows PowerShell termina na hora, sem erro e sem executar o script. Isso valia para todas as versões anteriores.
+- O instalador agora é aberto num console próprio, oculto, que continua rodando depois que o Cobre fecha.
+- O Cobre só fecha depois que o instalador confirma que começou. Se ele não começar, aparece um aviso e o Cobre continua aberto.
+- Antes de trocar os arquivos, o instalador espera todos os processos do Cobre terminarem e tenta a cópia de novo se o arquivo ainda estiver em uso.
+- As notas mostradas depois da atualização ("O que mudou") não perdem mais os acentos.
+- Um teste novo confirma que o instalador continua rodando depois que o processo que o abriu termina.
+- **Instale esta versão uma vez pelo instalador ou pelo ZIP portátil.** As versões anteriores não conseguem concluir a atualização sozinhas; a partir da 3.17.1, as próximas chegam pelo app.
+- Inclui contribuição de [@dilucas00](https://github.com/dilucas00).
+
 ## 3.17.0 — Preferências redesenhadas, cor da capa e cinema no tema claro
 
 - Preferências com cara nova: lateral com ícones, título e frase de apoio em cada categoria e opções agrupadas em cartões. Em janelas estreitas, a lateral vira uma faixa de ícones.

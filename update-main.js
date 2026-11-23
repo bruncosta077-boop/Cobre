@@ -152,9 +152,12 @@ module.exports = function initUpdater({ app, ipcMain, getWin }) {
       const payload={version:ready.version,notes:ready.notes,target,stage:ready.stage,files:ready.files,state:stateFile(),exe,pid:process.pid};
       const argsPath=path.join(dir,'install.json'), scriptPath=path.join(dir,'install.ps1');
       fs.writeFileSync(argsPath,JSON.stringify(payload),{mode:0o600}); fs.writeFileSync(scriptPath,INSTALL_SCRIPT,'utf8');
-      const child=spawn('powershell.exe',['-NoProfile','-ExecutionPolicy','Bypass','-File',scriptPath,argsPath],{detached:true,stdio:'ignore',windowsHide:true});
-      child.unref(); ready=null;
-      setTimeout(()=>app.quit(),500);
+      const started=argsPath+'.started'; fs.rmSync(started,{force:true});
+      launchInstaller(scriptPath,argsPath);
+      // só fecha o app quando o instalador confirma que começou; senão avisa, em vez de fechar em silêncio
+      if(!await waitForFile(started,15000)) return {ok:false,error:'O instalador da atualização não iniciou. O Cobre continua aberto; tente de novo ou instale pelo instalador completo.'};
+      ready=null;
+      setTimeout(()=>app.quit(),200);
       return {ok:true};
     } catch(e) { return {ok:false,error:e.message||'Não consegui iniciar a instalação.'}; }
   });
@@ -198,7 +201,26 @@ function readStagedManifest(stage, version) {
   return names;
 }
 
+// Lança o script de instalação fora do app, de um jeito que sobrevive ao app fechar.
+// Um PowerShell lançado direto com detached (DETACHED_PROCESS, sem console) termina na hora com código 0 sem rodar
+// o script, e um filho não destacado morre junto com o app (job do libuv). O "start" do cmd cria o PowerShell num
+// console próprio, fora do app; -WindowStyle Hidden esconde esse console.
+function launchInstaller(scriptPath, argPath) {
+  const sysRoot = process.env.SystemRoot || 'C:\\Windows';
+  const cmd = path.join(sysRoot, 'System32', 'cmd.exe'), ps = path.join(sysRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
+  const q = (s) => { if (/["%\r\n]/.test(s)) throw new Error('O caminho da atualização tem um caractere que o Windows não aceita aqui.'); return `"${s}"`; };
+  const line = `/d /s /c "start "" /min ${q(ps)} -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File ${q(scriptPath)} ${q(argPath)}"`;
+  const child = spawn(cmd, [line], { detached: true, stdio: 'ignore', windowsHide: true, windowsVerbatimArguments: true });
+  child.on('error', () => {});
+  child.unref();
+}
+async function waitForFile(file, ms) {
+  for (const end = Date.now() + ms; Date.now() < end;) { if (fs.existsSync(file)) return true; await new Promise((r) => setTimeout(r, 100)); }
+  return fs.existsSync(file);
+}
+
 module.exports.validRelative = validRelative;
+module.exports.launchInstaller = launchInstaller;
 module.exports.readStagedManifest = readStagedManifest;
 module.exports.extractSafe = extractSafe;
 module.exports.parseLatestDesktopReleaseAtom = parseLatestDesktopReleaseAtom;
@@ -243,10 +265,15 @@ module.exports.extractorAllowedPaths = () => {
 const INSTALL_SCRIPT = String.raw`
 param([string]$ArgsPath)
 $ErrorActionPreference='Stop'
-$a=Get-Content -LiteralPath $ArgsPath -Raw | ConvertFrom-Json
+# sinal para o app: o instalador começou e o app já pode fechar
+Set-Content -LiteralPath ($ArgsPath + '.started') -Value $PID
+$a=Get-Content -LiteralPath $ArgsPath -Raw -Encoding UTF8 | ConvertFrom-Json
 $failure=Join-Path (Split-Path -Parent $a.state) 'update-failed.json'
 try {
   try { Wait-Process -Id ([int]$a.pid) -Timeout 90 -ErrorAction SilentlyContinue } catch {}
+  # espera todos os processos do Cobre (janela, GPU, áudio) soltarem o app.asar
+  $deadline=(Get-Date).AddSeconds(30)
+  while((Get-Process -ErrorAction SilentlyContinue | Where-Object { try { $_.Path -eq $a.exe } catch { $false } }) -and (Get-Date) -lt $deadline){ Start-Sleep -Milliseconds 250 }
   $backup=Join-Path (Split-Path -Parent $a.state) ('update-backup-'+$a.version)
   New-Item -ItemType Directory -Force -Path $backup | Out-Null
   $done=[System.Collections.Generic.List[object]]::new()
@@ -260,7 +287,7 @@ try {
       if(Test-Path -LiteralPath $dst){Copy-Item -LiteralPath $dst -Destination $bk -Force; $existed=$true}else{$existed=$false}
       $done.Add(@{dst=$dst;bk=$bk;existed=$existed}) | Out-Null
       New-Item -ItemType Directory -Force -Path ([IO.Path]::GetDirectoryName($dst)) | Out-Null
-      Copy-Item -LiteralPath $src -Destination $dst -Force
+      for($try=1;;$try++){ try { Copy-Item -LiteralPath $src -Destination $dst -Force; break } catch { if($try -ge 8){ throw }; Start-Sleep -Milliseconds 500 } }
     }
     $notes=[string]$a.notes
     $stateJson=@{version=$a.version;notes=$notes;installedAt=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()} | ConvertTo-Json -Depth 5
