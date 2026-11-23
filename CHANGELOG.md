@@ -1,5 +1,18 @@
 # Histórico de versões — Cobre Desktop
 
+## 3.17.0 — Preferências redesenhadas, cor da capa e cinema no tema claro
+
+- Preferências com cara nova: lateral com ícones, título e frase de apoio em cada categoria e opções agrupadas em cartões. Em janelas estreitas, a lateral vira uma faixa de ícones.
+- Aparência: o tema é escolhido por cartões com a miniatura do app (Escuro, Claro, Seguir o Windows), e Visualização da capa e Barra de tempo viraram blocos com desenho.
+- Manutenção, Backup e Conta e conexões mostram cada ação como uma linha com ícone, título e descrição.
+- Letras ganhou uma prévia que muda junto com o estilo e o tamanho escolhidos.
+- As setas do teclado andam pelas categorias e pelas opções.
+- Cor de destaque: a opção dinâmica agora se chama "Da capa" e mostra a capa atual. Sem música tocando, ela usa o cobre e avisa o que fazer, em vez de não mudar nada. Capas que o Windows não consegue ler, como WebP, também funcionam.
+- Nova opção "Personalizada": escolha qualquer cor de destaque, e o segundo tom é gerado a partir dela.
+- O modo cinema passa a seguir o tema: no claro, fundo papel e barra de vidro clara. O encarte, a análise de espectro e a capa ampliada continuam escuros.
+- Os arquivos da interface não ficam mais em cache, para uma atualização nunca exibir estilos ou scripts antigos.
+- Inclui contribuição de [@dilucas00](https://github.com/dilucas00).
+
 ## 3.16.0 — atualização automática restaurada e capa quadrada
 
 - A atualização dentro do app voltou a funcionar. O pacote publicado nas versões 3.14.0 e 3.15.0 tinha caminhos inválidos no manifesto (por exemplo `12/node_modules/...`), gerados porque o script de empacotamento cortava os caminhos pelo tamanho da pasta temporária, que no GitHub Actions aparece em formato curto do Windows. O app recusava o pacote com "O pacote lista arquivos inválidos". Os caminhos agora são montados pelos nomes das pastas.

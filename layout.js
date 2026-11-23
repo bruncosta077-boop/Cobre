@@ -166,6 +166,181 @@
   // ---- Preferências
   const PREF_ORDER = ['Aparência', 'Biblioteca', 'Letras', 'Aplicativo', 'Conta', 'Backup das configurações', 'Manutenção'];
   const PREF_NAME = { Conta: 'Conta e conexões', 'Backup das configurações': 'Backup' };
+  // cada categoria: ícone, frase de apoio e grupos (título + seletores que puxam as linhas para dentro, na ordem)
+  const CAT = {
+    'Aparência': { icon: 'pal', sub: 'Tema, cor de destaque e o jeito da tela Tocando agora.',
+      groups: [['Tema', ['#thsel']], ['Cor de destaque', ['[data-acc]']], ['Interface', ['#zs']], ['Tocando agora', ['#vzsel', '#skst', '#clkc', '#vu2c']]] },
+    'Biblioteca': { icon: 'album', sub: 'Capas, fotos e selos da sua coleção.',
+      groups: [['Da internet', ['#netc', '#phc']], ['Exibição', ['#hrc']], ['Capas', ['[data-act="covreset"]']]] },
+    'Letras': { icon: 'lyr', sub: 'Onde buscar a letra e como ela aparece.',
+      groups: [['Busca', ['#netl']], ['Aparência da letra', ['.ly-preview', '#lyst', '#lysz']]] },
+    'Aplicativo': { icon: 'app', sub: 'Como o Cobre se comporta no Windows.' },
+    'Conta': { icon: 'user', sub: 'Sua conta Cobre e os serviços conectados.' },
+    'Backup das configurações': { icon: 'box', sub: 'Guarde as preferências num arquivo e traga de volta quando precisar.' },
+    'Manutenção': { icon: 'wrench', sub: 'Ferramentas para cuidar da biblioteca e do aplicativo.',
+      groups: [['Biblioteca', ['[data-act="rescan"]', '[data-act="unhide"]', '[data-act="covers"]']], ['Aplicativo', ['[data-act="updates"]', '[data-act="health"]', '[data-act="dev"]']], ['Sobre', ['[data-act="about"]']]] },
+  };
+  // ações (botões data-act) viram linhas com ícone e descrição; ação desconhecida ganha só o título
+  const ACT = {
+    account: ['user', 'Entrar, ver os aparelhos e aprovar pedidos de acesso.'],
+    remote: ['phone', 'Ouça a biblioteca no celular ou na TV pela rede de casa.'],
+    lastfm: ['scrobble', 'Registre no Last.fm o que você ouve.'],
+    covreset: ['image', 'Desfaz as trocas de capa automáticas ou feitas à mão.'],
+    backupExport: ['export', 'Exporta as preferências para um arquivo.'],
+    backupImport: ['import', 'Carrega as preferências de um backup salvo.'],
+    rescan: ['refresh', 'Lê a pasta de novo atrás de músicas novas, alteradas ou removidas.'],
+    unhide: ['undo', 'Traz de volta as faixas que você removeu da biblioteca.'],
+    covers: ['image', 'Acha capas com menos de 500 px e procura versões maiores.'],
+    updates: ['update', 'Procura uma versão nova do Cobre.'],
+    health: ['pulse', 'Versões, motor de áudio e estado da biblioteca.'],
+    dev: ['code', 'Abre as ferramentas de desenvolvedor.'],
+    about: ['info', 'Versão, créditos e licenças de terceiros.'],
+  };
+  const DESC = {
+    zs: 'Aumenta ou diminui textos e controles.',
+    vzsel: 'O que aparece no lugar da capa na tela Tocando agora.',
+    skst: 'Como a barra de progresso é desenhada.',
+    netc: 'Usa MusicBrainz, Cover Art Archive e Deezer quando o arquivo não traz capa.',
+    hrc: 'Marca arquivos sem perdas de 24 bits ou com 88,2 kHz ou mais.',
+    netl: 'Procura no LRCLIB quando não há arquivo .lrc nem letra nas tags.',
+    bgc: 'Fechar a janela deixa o Cobre tocando na bandeja do Windows.',
+  };
+  const icon = (name, cls) => `<svg${cls ? ` class="${cls}"` : ''} aria-hidden="true"><use href="#i-${name}"/></svg>`;
+
+  // miniatura da janela para os cartões de tema
+  const MINI = '<span class="th-mini" aria-hidden="true"><i class="tp-side"><b></b><b></b><b></b><b></b></i><i class="tp-main"><b></b><b></b><b></b><b></b><b></b><b></b></i><i class="tp-bar"><b></b></i></span>';
+  const themeArt = (v) => `<span class="th-prev th-${v === 'light' ? 'light' : 'dark'}${v === 'system' ? ' th-system' : ''}">${MINI}${v === 'system' ? `<span class="th-light th-cut">${MINI}</span>` : ''}</span>`;
+  // desenhos dos blocos (visualização da capa e barra de tempo); .tf = destaque, .ta = trilho
+  const ART = {
+    cover: '<rect x="13" y="4" width="22" height="24" rx="4"/><path class="ta" d="M17 9l4-3"/>',
+    vinyl: '<circle cx="24" cy="16" r="12"/><circle class="ta" cx="24" cy="16" r="8"/><circle class="tf" cx="24" cy="16" r="3"/>',
+    vu: '<path d="M10 25a14 14 0 0128 0"/><path class="tf" d="M24 25l7-10"/>',
+    vu2: '<rect x="8" y="5" width="32" height="23" rx="3"/><path class="ta" d="M14 25a10 10 0 0120 0"/><path class="tf" d="M24 25l5-7"/>',
+    spectrum: '<path d="M11 27v-6M16 27V14M21 27v-9M26 27V8M31 27V15M36 27v-5"/><path class="tf" d="M26 8v3"/>',
+    tubes: '<path d="M14 27V13a5 5 0 0110 0v14M24 27V13a5 5 0 0110 0v14M12 27h24"/><path class="tf" d="M17 19h4M27 19h4"/>',
+    line: '<path class="ta" d="M6 16h36"/><path class="tf" d="M6 16h15" stroke-width="3"/>',
+    wave: '<path class="tf" d="M7 13v6M10 10v12M13 14v4M16 9v14M19 12v8"/><path class="ta" d="M22 11v10M25 14v4M28 8v16M31 12v8M34 15v2M37 11v10M40 14v4"/>',
+    disc: '<circle class="ta" cx="24" cy="16" r="10"/><path class="tf" d="M24 6a10 10 0 019.5 13" stroke-width="3"/>',
+  };
+  const tileArt = (v) => `<svg class="tile-art" viewBox="0 0 48 32" aria-hidden="true">${ART[v] || '<circle cx="24" cy="16" r="9"/>'}</svg>`;
+
+  // select vira grupo de opções desenhadas (cartões ou blocos); o select fica escondido e recebe o "change"
+  function choices(s, cls, art) {
+    if (!s || s.dataset.seg) return;
+    s.dataset.seg = '1';
+    const g = el('div', cls); g.setAttribute('role', 'radiogroup');
+    const lab = s.closest('.prow') && $('.prow-l', s.closest('.prow'));
+    g.setAttribute('aria-label', lab ? lab.firstChild.textContent.trim() : s.id);
+    const sync = () => $$('[role=radio]', g).forEach((b) => { const on = b.dataset.v === s.value; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); b.tabIndex = on ? 0 : -1; });
+    [...s.options].forEach((o) => {
+      const b = el('button'); b.type = 'button'; b.dataset.v = o.value; b.setAttribute('role', 'radio');
+      b.innerHTML = art(o.value) + `<span class="ch-name">${icon('check', 'ch-ok')}<span></span></span>`;
+      $('.ch-name span', b).textContent = o.textContent;
+      b.onclick = () => { if (s.value === o.value) return; s.value = o.value; s.dispatchEvent(new Event('change', { bubbles: true })); sync(); };
+      g.append(b);
+    });
+    s.classList.add('seg-src'); s.addEventListener('change', sync); s.after(g); sync();
+  }
+
+  // cor de destaque: amostras, "Da capa" (dinâmica) e cor personalizada
+  function buildAccent(r) {
+    const sw = $$('[data-acc]', r);
+    if (!sw.length) return;
+    const pre = el('div', 'acc-sw'), extra = el('div', 'acc-extra');
+    pre.setAttribute('role', 'group'); pre.setAttribute('aria-label', 'Cores prontas');
+    for (const b of sw) {
+      if (b.dataset.acc === 'dyn') {
+        b.className = 'acc-chip acc-dyn' + (b.classList.contains('on') ? ' on' : ''); b.removeAttribute('style');
+        b.title = 'Muda a cada faixa, a partir da cor da capa';
+        b.innerHTML = '<span class="acc-cover" aria-hidden="true"></span><span>Da capa</span>';
+        extra.append(b);
+      } else { b.setAttribute('aria-label', b.title); pre.append(b); }
+    }
+    const custom = el('label', 'acc-chip acc-custom');
+    custom.title = 'Escolher qualquer cor';
+    custom.innerHTML = '<span class="acc-dot" aria-hidden="true"></span><span>Personalizada</span><input type="color" id="acc-custom" aria-label="Cor de destaque personalizada">';
+    extra.append(custom);
+    const note = el('p', 'prow-d acc-note');
+    r.className = 'prow stack';
+    r.replaceChildren(el('div', 'acc', [pre, extra]), note);
+  }
+  function syncAccent() {
+    const box = $('#pop .acc');
+    if (!box) return;
+    const a = localStorage.accent || '#c9773f|#e6a06a', isDyn = a === 'dyn';
+    const isPreset = $$('.swt', box).some((b) => b.dataset.acc === a), custom = $('.acc-custom', box);
+    $$('[data-acc]', box).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.acc === a)));
+    custom.classList.toggle('on', !isDyn && !isPreset);
+    const hex = a.split('|')[0];
+    if (!isDyn && !isPreset && /^#[0-9a-f]{6}$/i.test(hex)) { custom.style.setProperty('--dot', hex); $('#acc-custom', box).value = hex; }
+    else custom.style.removeProperty('--dot');
+    const cov = $('#cover').style.backgroundImage;
+    $('.acc-cover', box).style.backgroundImage = cov || '';
+    const note = $('.acc-note', $('#pop'));
+    note.textContent = !isDyn ? '' : cov ? 'Muda a cada faixa, a partir da cor mais marcante da capa. Capas sem cor forte usam o cobre.' : 'Toque uma música para ver a cor da capa. Até lá, fica o cobre.';
+    note.hidden = !note.textContent;
+  }
+  safe('setAccent', () => { const _sa = setAccent; setAccent = function () { const r = _sa.apply(this, arguments); safe('syncAccent', syncAccent); return r; }; });
+  new MutationObserver(() => safe('syncAccent', syncAccent)).observe($('#cover'), { attributes: true, attributeFilter: ['style'] });
+
+  // botão de ação (data-act) vira uma linha com ícone, título, descrição e seta; o data-act continua no botão
+  function actionRow(b) {
+    const [ic, desc] = ACT[b.dataset.act] || ['chev', ''];
+    const title = b.textContent.trim();
+    b.className = 'pact'; b.type = 'button';
+    b.innerHTML = `<span class="pact-ic">${icon(ic)}</span><span class="pact-tx"><b></b>${desc ? '<span></span>' : ''}</span>${icon('chev', 'pact-go')}`;
+    $('b', b).textContent = title;
+    if (desc) $('.pact-tx span', b).textContent = desc;
+    return el('div', 'prow action', [b]);
+  }
+  // interruptor: texto à esquerda (com descrição), chave à direita, tudo clicável
+  function switchRow(r) {
+    const lab = $('label.net', r), inp = lab && $('input', lab);
+    if (!inp) return;
+    const text = [...lab.childNodes].filter((n) => n !== inp).map((n) => n.textContent).join('').trim();
+    const tx = el('span', 'sw-tx', [el('span', 'sw-t', [document.createTextNode(text)])]);
+    if (DESC[inp.id]) tx.append(el('span', 'prow-d', [document.createTextNode(DESC[inp.id])]));
+    lab.replaceChildren(inp, tx);
+  }
+  // descrição embaixo do rótulo das linhas de select e range
+  function describe(r) {
+    const ctl = $('select, input', r), lab = $('.prow-l', r);
+    if (!ctl || !lab || !DESC[ctl.id] || $('.prow-d', r)) return;
+    const txt = el('div', 'prow-txt'); lab.replaceWith(txt); txt.append(lab, el('p', 'prow-d', [document.createTextNode(DESC[ctl.id])]));
+  }
+  // prévia da letra: as classes ly-* do body valem aqui também
+  function lyricPreview() {
+    const box = el('div', 'ly-preview'); box.setAttribute('aria-hidden', 'true');
+    ['Uma linha que já passou', 'A linha que está tocando', 'A próxima linha'].forEach((t, i) => box.append(el('p', 'ln' + (i === 1 ? ' on' : ''), [document.createTextNode(t)])));
+    const r = el('div', 'prow stack', [box]);
+    return r;
+  }
+  function groupRows(name, rows) {
+    const spec = (CAT[name] && CAT[name].groups) || [];
+    const hit = (r, s) => r.matches(s) || !!r.querySelector(s);
+    const out = spec.map(([title]) => ({ title, rows: [] })), rest = { title: '', rows: [] };
+    for (const r of rows) { const i = spec.findIndex(([, sels]) => sels.some((s) => hit(r, s))); (i >= 0 ? out[i] : rest).rows.push(r); }
+    out.forEach((g, i) => { const sels = spec[i][1], pos = (r) => { const k = sels.findIndex((s) => hit(r, s)); return k < 0 ? 99 : k; }; g.rows.sort((a, b) => pos(a) - pos(b)); });
+    return [...out, rest].filter((g) => g.rows.length);
+  }
+  function pane(name, label, rows) {
+    const meta = CAT[name] || {};
+    const p = el('section', 'pf-pane');
+    p.dataset.cat = name; p.setAttribute('aria-label', label);
+    const head = el('div', 'pf-head', [el('h3', '', [document.createTextNode(label)])]);
+    if (meta.sub) head.append(el('p', 'pf-sub', [document.createTextNode(meta.sub)]));
+    p.append(head);
+    for (const g of groupRows(name, rows)) {
+      const sec = el('section', 'pf-group');
+      if (g.title) sec.append(el('h4', '', [document.createTextNode(g.title)]));
+      const body = g.rows.filter((r) => !r.classList.contains('prow-foot')), foot = g.rows.filter((r) => r.classList.contains('prow-foot'));
+      if (body.length) sec.append(el('div', 'pf-card' + (body.every((r) => r.classList.contains('action')) ? ' list' : ''), body));
+      foot.forEach((r) => { r.className = 'pf-foot'; sec.append(r); });
+      p.append(sec);
+    }
+    return p;
+  }
+
   let lastCat = 'Aparência';
   function buildPrefs(pop) {
     const kids = [...pop.children];
@@ -193,22 +368,69 @@
     }
     const names = [...groups.keys()].sort((a, b) => (PREF_ORDER.indexOf(a) + 1 || 99) - (PREF_ORDER.indexOf(b) + 1 || 99));
     if (!names.includes(lastCat)) lastCat = names[0];
-    const nav = el('div', 'pf-nav', [el('p', 'pf-title', [document.createTextNode('Preferências')])]);
+    const nav = el('nav', 'pf-nav', [el('p', 'pf-title', [document.createTextNode('Preferências')])]);
+    nav.setAttribute('aria-label', 'Categorias');
     const panes = el('div', 'pf-body');
     for (const name of names) {
       const label = PREF_NAME[name] || name;
-      const b = el('button', 'pf-cat' + (name === lastCat ? ' on' : ''), [document.createTextNode(label)]);
+      const b = el('button', 'pf-cat' + (name === lastCat ? ' on' : ''));
       b.type = 'button'; b.dataset.cat = name;
+      b.innerHTML = icon((CAT[name] && CAT[name].icon) || 'gear') + '<span></span>';
+      $('span', b).textContent = label; b.title = label;
+      if (name === lastCat) b.setAttribute('aria-current', 'page');
       nav.append(b);
-      const pane = el('section', 'pf-pane', [el('h3', '', [document.createTextNode(label)]), ...rowsFrom(groups.get(name))]);
-      pane.dataset.cat = name; pane.hidden = name !== lastCat;
-      panes.append(pane);
+      const rows = prefRows(name, groups.get(name));
+      const p = pane(name, label, rows);
+      p.hidden = name !== lastCat;
+      panes.append(p);
     }
-    if (ver) { ver.className = 'pf-ver'; nav.append(ver); }
-    const x = el('button', 'pf-x'); x.type = 'button'; x.setAttribute('aria-label', 'Fechar preferências'); x.innerHTML = '<svg><use href="#i-x"/></svg>';
+    // rodapé: símbolo, versão e direitos (o texto vem do gearHtml)
+    const vm = ver && /Versão\s+(\S+)\s*·\s*(.+)/.exec(ver.textContent.trim());
+    const foot = el('div', 'pf-ver');
+    foot.innerHTML = '<span class="brand-ring pf-ring" aria-hidden="true"><i></i><i></i><i></i></span><span class="pf-ver-tx"><b></b><small></small></span>';
+    $('b', foot).textContent = vm ? `Cobre ${vm[1]}` : 'Cobre';
+    $('small', foot).textContent = vm ? vm[2] : (ver ? ver.textContent.trim() : '');
+    nav.append(foot);
+    const x = el('button', 'pf-x'); x.type = 'button'; x.setAttribute('aria-label', 'Fechar preferências'); x.innerHTML = icon('x');
     pop.replaceChildren(nav, panes, x);
+    syncAccent();
     segmentize(pop, { max: 3 });
+    $$('.seg', pop).forEach((g) => { const lab = g.closest('.prow') && $('.prow-l', g.closest('.prow')); if (lab && !g.getAttribute('aria-label')) g.setAttribute('aria-label', lab.textContent.trim()); });
   }
+  // linhas de uma categoria, já no formato novo
+  function prefRows(name, nodes) {
+    const out = [];
+    for (const r of rowsFrom(nodes)) {
+      const acts = $$('[data-act]', r);
+      if (acts.length && !$('select, input', r)) {
+        acts.forEach((b) => out.push(actionRow(b)));
+        $$('.prow-note', r).forEach((n) => { n.className = 'prow-foot'; out.push(n); });
+        continue;
+      }
+      if (r.classList.contains('switch')) switchRow(r);
+      if ($('[data-acc]', r)) buildAccent(r);
+      const th = $('#thsel', r);
+      if (th) { choices(th, 'th-cards', themeArt); $('.prow-l', r)?.remove(); r.className = 'prow stack bare'; }
+      for (const id of ['#vzsel', '#skst']) { const s = $(id, r); if (s) { describe(r); r.classList.add('stack'); choices(s, 'tiles', tileArt); } }
+      describe(r);
+      out.push(r);
+    }
+    if (name === 'Letras') out.push(lyricPreview());
+    return out;
+  }
+  // teclado: setas andam pelas categorias e pelas opções de cada grupo
+  $('#pop').addEventListener('keydown', (e) => {
+    if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+    const cat = e.target.closest('.pf-cat');
+    const grp = !cat && e.target.closest('[role=radiogroup]');
+    const list = cat ? $$('.pf-cat', $('#pop')) : grp ? $$('[role=radio]', grp) : null;
+    if (!list) return;
+    const fwd = e.key === 'ArrowDown' || e.key === 'ArrowRight', i = list.indexOf(cat || e.target.closest('[role=radio]'));
+    const next = list[(i + (fwd ? 1 : -1) + list.length) % list.length];
+    e.preventDefault(); next.click(); next.focus();
+  });
+  // cor personalizada: o segundo tom sai da própria cor escolhida
+  $('#pop').addEventListener('input', (e) => { if (e.target.id === 'acc-custom') setAccent(accentPair(e.target.value).join('|')); });
 
   // ---- Som (equalizador e áudio) e ajustes do vinil
   const SOUND = [['Tonalidade', ['#ftmp', '#fhp', '#flp']], ['Reprodução', ['#ftr', '#fcf', '#frate', '#fcrk']], ['Espaço', ['#fbal', '#fmono']], ['Medidores', ['#fvu']], ['Valvulado', ['#tbon', '#tbdr']]];
@@ -277,7 +499,7 @@
     const cat = e.target.closest('.pf-cat');
     if (cat) {
       lastCat = cat.dataset.cat;
-      $$('.pf-cat', $('#pop')).forEach((b) => b.classList.toggle('on', b === cat));
+      $$('.pf-cat', $('#pop')).forEach((b) => { b.classList.toggle('on', b === cat); if (b === cat) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
       $$('.pf-pane', $('#pop')).forEach((p) => { p.hidden = p.dataset.cat !== lastCat; });
       $('.pf-body', $('#pop')).scrollTop = 0;
       return;

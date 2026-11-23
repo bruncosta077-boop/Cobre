@@ -187,7 +187,7 @@ let mode = localStorage.mode || 'albums', scope = { artist: null, album: null },
 const cur = () => q[pos];
 const playbackDuration = () => window.CobrePlaybackDuration.effectiveDuration(audio.duration, cur()?.dur);
 let revs = {}, rvTimer, rvOpen = false;
-let VERSION = '3.16.0';
+let VERSION = '3.17.0';
 api.version().then((version) => { if (/^\d+\.\d+\.\d+(?:[-+][\w.-]+)?$/.test(version)) VERSION = version; }).catch(() => {});
 const rk = (g) => g.artist + '|' + g.album;
 const saveRevs = () => api.revSave(revs);
@@ -319,7 +319,7 @@ function go(t, d, X) {
   getCover(t).then((u) => {
     if (cur() !== t) return;
     if (u) { $('#cover').style.backgroundImage = `url("${u}")`; $('#cover').textContent = ''; }
-    if (dyn) { if (u) api.palette(u).then((p) => { if (p && dyn && cur() === t) paint(p[0], p[1]); }); else paint('#c9773f', '#e6a06a'); }
+    if (dyn && cur() === t) paintFromCover(u, () => cur() === t);
   });
   loadLyrics(t);
   mark();
@@ -544,11 +544,56 @@ function outHtml() {
 let dyn = false;
 const ACC = [['Cobre', '#c9773f|#e6a06a'], ['Branco e rosa', '#f2f2f2|#f08cb5'], ['Preto e dourado', '#b8892b|#f4d479'], ['Azul e ciano', '#4a8de0|#5fd6e0'], ['Pôr do sol', '#e8604c|#f6b45c'], ['Roxo e rosa', '#8a63d2|#e07ab8'], ['Verde e limão', '#3fa66b|#c4e05c'], ['Dinâmica (cor da capa)', 'dyn']];
 const paint = (a, b) => { const s = document.documentElement.style; s.setProperty('--cu', a); s.setProperty('--cu2', b); };
+const ACC_DEFAULT = ['#c9773f', '#e6a06a'];
+// cor <-> HSL (mesma conta do processo principal, para o segundo tom combinar)
+const toHex = (r, g, b) => '#' + [r, g, b].map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
+function hslHex(h, s, l) {
+  const k = (n) => (n + h / 30) % 12, a = s * Math.min(l, 1 - l), f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return toHex(f(0) * 255, f(8) * 255, f(4) * 255);
+}
+function rgbHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+  let h = 0, s = 0;
+  if (d) { s = d / (1 - Math.abs(2 * l - 1)); h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h = (h * 60 + 360) % 360; }
+  return [h, s, l];
+}
+// segundo tom do destaque a partir de qualquer cor (usado pela cor personalizada)
+function accentPair(hex) {
+  const n = parseInt(String(hex).slice(1), 16), [h, s, l] = rgbHsl(n >> 16 & 255, n >> 8 & 255, n & 255);
+  return [hex, hslHex((h + 28) % 360, s, Math.min(0.78, l + 0.14))];
+}
+// cor marcante da capa: o processo principal lê o arquivo; se ele não conseguir (WebP, por exemplo), o canvas lê a imagem
+// já carregada. Capas sem cor forte devolvem null e quem chama volta ao cobre.
+async function coverPalette(u) {
+  const p = await api.palette(u).catch(() => null);
+  if (p) return p;
+  try {
+    const im = new Image(); im.src = u; await im.decode();
+    const c = document.createElement('canvas'); c.width = c.height = 24;
+    const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(im, 0, 0, 24, 24);
+    const d = g.getImageData(0, 0, 24, 24).data, bins = new Map();
+    for (let i = 0; i < d.length; i += 4) {
+      const r = d[i], gr = d[i + 1], b = d[i + 2], mx = Math.max(r, gr, b), mn = Math.min(r, gr, b), s = mx ? (mx - mn) / mx : 0, v = mx / 255;
+      if (s < 0.18 || v < 0.25) continue;
+      const k = (r >> 5) + ',' + (gr >> 5) + ',' + (b >> 5), o = bins.get(k) || { w: 0, r: 0, g: 0, b: 0 }, w = s * v;
+      o.w += w; o.r += r * w; o.g += gr * w; o.b += b * w; bins.set(k, o);
+    }
+    const t = [...bins.values()].sort((x, y) => y.w - x.w)[0];
+    if (!t) return null;
+    const [h, s0, l0] = rgbHsl(t.r / t.w, t.g / t.w, t.b / t.w), s = Math.max(0.45, Math.min(1, s0)), l = Math.max(0.52, Math.min(0.68, l0));
+    return [hslHex(h, s, l), hslHex((h + 28) % 360, s, Math.min(0.78, l + 0.14))];
+  } catch { return null; }
+}
+function paintFromCover(u, still = () => true) {
+  if (!u) { paint(...ACC_DEFAULT); return; }
+  coverPalette(u).then((p) => { if (dyn && still()) paint(...(p || ACC_DEFAULT)); });
+}
 function setAccent(c) {
   localStorage.accent = c; dyn = c === 'dyn';
   if (dyn) {
     const m = $('#cover').style.backgroundImage.match(/url\("?(.*?)"?\)/);
-    if (m) api.palette(m[1]).then((p) => { if (p && dyn) paint(p[0], p[1]); });
+    paintFromCover(m && m[1]);
   } else { const [a, b = a] = c.split('|'); paint(a, b); }
   document.querySelectorAll('[data-acc]').forEach((x) => x.classList.toggle('on', x.dataset.acc === c));
 }

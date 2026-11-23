@@ -91,6 +91,11 @@
   --glow-sm: 0 0 18px color-mix(in srgb, var(--cu) 34%, transparent);
   --shadow-pop: 0 18px 48px #000a, 0 0 0 1px #0006;
   --shadow-lift: 0 30px 80px #0008;
+  /* vidro: barras e botões que flutuam sobre a capa (modo cinema) */
+  --glass:        #141210d9;
+  --glass-soft:   #0d0c0bb3;
+  --glass-line:   #ffffff12;
+  --glass-shadow: 0 20px 50px #0009;
   --sheen: linear-gradient(140deg, #ffffff2e 0%, #ffffff00 26%);  /* "o reflexo" */
 
   /* ---------- Assinatura: o disco de cobre ---------- */
@@ -129,6 +134,10 @@
   --cover-empty: radial-gradient(circle at 34% 28%, #fffaf3, #e4dacd 62%, #d9cdbe);
   --shadow-pop: 0 18px 48px #2a1a0e26, 0 0 0 1px #2a1a0e14;
   --shadow-lift: 0 30px 80px #2a1a0e30;
+  --glass:        #fbf8f3d9;
+  --glass-soft:   #fffdf9b8;
+  --glass-line:   #2a1a0e17;
+  --glass-shadow: 0 20px 50px #2a1a0e24;
   --sheen: linear-gradient(140deg, #ffffff66 0%, #ffffff00 28%);
 }
 

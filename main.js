@@ -133,6 +133,8 @@ function installAppProtocol() {
       const headers = new Headers(response.headers);
       headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-src 'none'; frame-ancestors 'none'");
       headers.set('X-Content-Type-Options', 'nosniff');
+      // arquivos do próprio app: sempre relidos, para uma atualização nunca mostrar CSS/JS antigos do cache
+      headers.set('Cache-Control', 'no-cache');
       headers.set('Referrer-Policy', 'no-referrer');
       return new Response(await response.arrayBuffer(), { status: response.status, headers });
     } catch (error) {
