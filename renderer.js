@@ -129,6 +129,7 @@ applyFx();
 const mkDeck = () => { const el = new Audio(); el.preload = 'auto'; const g = G(); ctx.createMediaElementSource(el).connect(g); g.connect(bus); return { el, g }; };
 const decks = [mkDeck(), mkDeck()];
 let act = 0, audio = decks[0].el, nxt = null, swapTimer = null;
+const failedTracks = new Set();
 const trX = () => fx.tr === 'gapless' ? 0 : (+fx.tr || 0);
 
 function swap(d, X) {
@@ -186,7 +187,7 @@ let mode = localStorage.mode || 'albums', scope = { artist: null, album: null },
 const cur = () => q[pos];
 const playbackDuration = () => window.CobrePlaybackDuration.effectiveDuration(audio.duration, cur()?.dur);
 let revs = {}, rvTimer, rvOpen = false;
-let VERSION = '3.14.0';
+let VERSION = '3.15.0';
 api.version().then((version) => { if (/^\d+\.\d+\.\d+(?:[-+][\w.-]+)?$/.test(version)) VERSION = version; }).catch(() => {});
 const rk = (g) => g.artist + '|' + g.album;
 const saveRevs = () => api.revSave(revs);
@@ -325,6 +326,7 @@ function go(t, d, X) {
 }
 
 function start(t) {
+  failedTracks.clear();
   q = view.slice();
   if (shuffle) q = [t, ...shuffled(q.filter((x) => x !== t))];
   pos = q.indexOf(t);
@@ -337,6 +339,31 @@ function next(auto) {
   else if (auto && !repeat) return;
   else { if (shuffle) q = shuffled(q); pos = 0; }
   go(cur());
+}
+
+function skipFailedTrack() {
+  for (let i = 0; i < q.length; i++) {
+    if (pos + 1 < q.length) pos++;
+    else if (repeat) { if (shuffle) q = shuffled(q); pos = 0; }
+    else return false;
+    if (!failedTracks.has(cur())) return true;
+  }
+  return false;
+}
+
+function handlePlaybackError() {
+  const failed = cur();
+  if (!failed || failedTracks.has(failed)) return;
+  failedTracks.add(failed);
+  clearTimeout(swapTimer); swapTimer = null; nxt = null;
+  if (skipFailedTrack()) {
+    const following = cur();
+    toast(`Não foi possível reproduzir “${failed.title}”. Tentando “${following.title}”.`);
+    go(following);
+  } else {
+    audio.pause();
+    toast(`Não foi possível reproduzir “${failed.title}”. Verifique o arquivo ou o formato.`);
+  }
 }
 
 function prev() {
@@ -399,6 +426,7 @@ async function devices() {
 audio.onplay = () => { applyCrackle(); $('#play').innerHTML = icon('pause'); $('#play').setAttribute('aria-label', 'Pausar'); };
 audio.onpause = () => { clearTimeout(swapTimer); swapTimer = null; applyCrackle(); $('#play').innerHTML = icon('play'); $('#play').setAttribute('aria-label', 'Tocar'); };
 audio.onended = () => next(true);
+audio.onerror = handlePlaybackError;
 const refreshDuration = () => { $('#tot').textContent = fmt(playbackDuration()) || '0:00'; };
 audio.onloadedmetadata = refreshDuration;
 audio.ondurationchange = refreshDuration;
@@ -411,7 +439,7 @@ audio.ontimeupdate = () => {
   schedule();
 };
 
-['onplay', 'onpause', 'onended', 'onloadedmetadata', 'ondurationchange', 'ontimeupdate'].forEach((k) => {
+['onplay', 'onpause', 'onended', 'onerror', 'onloadedmetadata', 'ondurationchange', 'ontimeupdate'].forEach((k) => {
   const f = audio[k];
   decks.forEach((d) => { d.el[k] = () => { if (d.el === audio) f(); }; });
 });
@@ -1012,7 +1040,7 @@ addEventListener('mousedown', (e) => { if (!e.target.closest('#ctx')) $('#ctx').
 
 function playList(tracks) { const keep = view; view = tracks; start(tracks[0]); view = keep; }
 function addQueue(tracks, next) {
-  if (!cur()) { q = tracks.slice(); pos = 0; go(cur()); toast('Tocando'); return; }
+  if (!cur()) { failedTracks.clear(); q = tracks.slice(); pos = 0; go(cur()); toast('Tocando'); return; }
   if (next) q.splice(pos + 1, 0, ...tracks); else q.push(...tracks);
   mark(); toast(next ? 'Vai tocar a seguir' : 'Adicionada à fila');
 }

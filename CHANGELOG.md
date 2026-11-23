@@ -1,5 +1,11 @@
 # Histórico de versões — Cobre Desktop
 
+## 3.15.0 — recuperação quando uma faixa não pode ser lida
+
+- Se o Chromium não conseguir abrir ou decodificar uma faixa, o player informa qual faixa falhou e tenta a próxima faixa da fila.
+- Faixas que falharam são lembradas durante aquela reprodução para não criar um ciclo infinito quando a repetição está ligada. Se nenhuma faixa restante tocar, o app mostra uma mensagem para verificar o arquivo ou formato.
+- A versão mantém a instalação e atualização existentes. A versão exibida pela interface continua sendo obtida do executável Electron.
+
 ## 3.14.0 — atualização confiável e manutenção do player
 
 - O tempo total, a barra de busca e a transição entre faixas usam a duração lida dos metadados do arquivo quando o elemento de áudio do Chromium ainda não informa uma duração finita. Isso evita mostrar `0:00` durante a reprodução e mantém a navegação da faixa disponível.
