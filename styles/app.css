@@ -165,8 +165,8 @@ header>button:not(.tab) svg{width:18px;height:18px}
   transition:opacity var(--t-base) var(--ease-warm),transform var(--t-slow) var(--ease-warm),visibility 0s linear var(--t-slow)}
 body.np #np,body.fs #np,body.cin #np{opacity:1;visibility:visible;transform:none;transition:opacity var(--t-base) var(--ease-warm),transform var(--t-slow) var(--ease-warm),visibility 0s}
 #cw{position:relative;justify-self:center;width:min(100%,calc(100vh - 230px),560px)}
-/* a capa é um disco: anel externo fino (o "sulco") e reflexo no arco superior esquerdo */
-#cover,#cvv{width:100%;aspect-ratio:1;border-radius:var(--r-disc);background:var(--cover-empty) center/cover;display:grid;place-items:center;
+/* a capa é quadrada (mostra a arte inteira): moldura fina externa e reflexo no canto superior esquerdo */
+#cover,#cvv{width:100%;aspect-ratio:1;border-radius:var(--r-lg);background:var(--cover-empty) center/cover;display:grid;place-items:center;
   color:var(--muted);font:500 var(--fs-meta) var(--font-mono);letter-spacing:.04em;
   box-shadow:0 0 0 1px var(--line),0 40px 90px #000a;outline:1px solid var(--line);outline-offset:12px;
   transition:box-shadow var(--t-slow) var(--ease-warm),outline-color var(--t-slow) var(--ease-warm)}
