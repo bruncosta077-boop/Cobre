@@ -45,7 +45,7 @@ jobs:
         shell: pwsh
         run: |
           $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
-          Get-ChildItem release -File | Where-Object { $_.Name -in @("Cobre-$version-x64.exe", "Cobre-$version-x64.zip", "Cobre-Update-v$version-x64.zip") } | ForEach-Object {
+          Get-ChildItem release -File | Where-Object { $_.Name -in @("Cobre-$version-x64.exe", "Cobre-$version-x64.zip", "Cobre-Update-v$version-x64.zip", "Cobre-Update-Full-v$version-x64.zip") } | ForEach-Object {
             $hash = Get-FileHash $_.FullName -Algorithm SHA256
             "$($hash.Hash.ToLower())  $($_.Name)"
           } | Set-Content release/checksums-sha256.txt
@@ -57,6 +57,7 @@ jobs:
             release/Cobre-*-x64.exe
             release/Cobre-[0-9]*-x64.zip
             release/Cobre-Update-v*-x64.zip
+            release/Cobre-Update-Full-v*-x64.zip
             release/checksums-sha256.txt
           if-no-files-found: error
           retention-days: 30
@@ -101,4 +102,5 @@ jobs:
             release/Cobre-*-x64.exe
             release/Cobre-[0-9]*-x64.zip
             release/Cobre-Update-v*-x64.zip
+            release/Cobre-Update-Full-v*-x64.zip
             release/checksums-sha256.txt

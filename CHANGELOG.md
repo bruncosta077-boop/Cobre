@@ -1,5 +1,15 @@
 # Histórico de versões — Cobre Desktop
 
+## 3.16.0 — atualização automática restaurada e capa quadrada
+
+- A atualização dentro do app voltou a funcionar. O pacote publicado nas versões 3.14.0 e 3.15.0 tinha caminhos inválidos no manifesto (por exemplo `12/node_modules/...`), gerados porque o script de empacotamento cortava os caminhos pelo tamanho da pasta temporária, que no GitHub Actions aparece em formato curto do Windows. O app recusava o pacote com "O pacote lista arquivos inválidos". Os caminhos agora são montados pelos nomes das pastas.
+- O pacote `Cobre-Update-v…-x64.zip` passa a conter só o `app.asar`, único arquivo trocado em instalações pelo instalador ou pelo ZIP portátil. Como esse arquivo é aceito pelo atualizador de todas as versões desde a 3.6, instalações antigas (3.6 a 3.15) conseguem atualizar direto para esta versão, sem reinstalar. Antes, cada arquivo novo do app fazia as versões anteriores recusarem o pacote inteiro.
+- Instalações descompactadas (sem `app.asar`) usam o novo pacote `Cobre-Update-Full-v…-x64.zip` a partir desta versão.
+- Os testes do CI agora aplicam ao pacote gerado a mesma validação de manifesto que o app faz depois do download, impedindo a publicação de um pacote que o app recusaria.
+- Na tela Tocando agora, a capa do álbum aparece quadrada, mostrando a arte inteira em vez de cortá-la num círculo.
+- Na barra do player, o botão de saída de áudio (fone) fica depois do botão de som e equalizador, ao lado do volume.
+- Inclui contribuição de [@dilucas00](https://github.com/dilucas00).
+
 ## 3.15.0 — recuperação quando uma faixa não pode ser lida
 
 - Se o Chromium não conseguir abrir ou decodificar uma faixa, o player informa qual faixa falhou e tenta a próxima faixa da fila.

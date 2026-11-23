@@ -6,7 +6,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { execFileSync } = require('child_process');
-const { extractSafe, validRelative, parseLatestDesktopReleaseAtom, parseAssetSha256, assertUpdateTargetWritable, extractorAllowedPaths } = require('./update-main');
+const { extractSafe, validRelative, readStagedManifest, parseLatestDesktopReleaseAtom, parseAssetSha256, assertUpdateTargetWritable, extractorAllowedPaths } = require('./update-main');
 
 test('fallback release feed selects the latest Desktop tag and converts notes to plain text', () => {
   const feed = `<?xml version="1.0"?><feed>
@@ -87,16 +87,45 @@ test('safe updater extracts the exact font and style paths from its ZIP', { skip
   }
 });
 
-const builtUpdatePackage = path.join(__dirname, 'release', `Cobre-Update-v${require('./package.json').version}-x64.zip`);
-test('the generated release update package passes the real safe extractor', { skip: !fs.existsSync(builtUpdatePackage) || process.platform !== 'win32' }, async (t) => {
+const releaseVersion = require('./package.json').version;
+const builtUpdatePackage = path.join(__dirname, 'release', `Cobre-Update-v${releaseVersion}-x64.zip`);
+const builtFullPackage = path.join(__dirname, 'release', `Cobre-Update-Full-v${releaseVersion}-x64.zip`);
+const extractBuilt = async (t, zip) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'cobre-update-release-test-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const stage = path.join(root, 'stage');
-  await extractSafe(builtUpdatePackage, stage);
+  await extractSafe(zip, stage);
+  return stage;
+};
+
+test('the packaged-install update carries only app.asar, accepted by every updater since 3.6', { skip: !fs.existsSync(builtUpdatePackage) || process.platform !== 'win32' }, async (t) => {
+  const stage = await extractBuilt(t, builtUpdatePackage);
+  // app.asar é o único arquivo presente na lista permitida de todas as versões publicadas; qualquer outro arquivo
+  // novo faria os atualizadores antigos recusarem o pacote inteiro.
+  assert.deepEqual(fs.readdirSync(stage).sort(), ['app.asar', 'cobre-update.json']);
+  assert.deepEqual([...readStagedManifest(stage, releaseVersion)], ['app.asar']);
+});
+
+test('the unpacked-install update passes the same manifest validation the app runs', { skip: !fs.existsSync(builtFullPackage) || process.platform !== 'win32' }, async (t) => {
+  const stage = await extractBuilt(t, builtFullPackage);
   const manifest = JSON.parse(fs.readFileSync(path.join(stage, 'cobre-update.json'), 'utf8'));
-  assert.equal(manifest.version, require('./package.json').version);
-  for (const file of ['app.asar', 'layout.js', 'playback-duration.js']) {
-    assert.ok(manifest.files.includes(file), `manifest contains ${file}`);
-    assert.ok(fs.existsSync(path.join(stage, file)), `extracted ${file}`);
-  }
+  const names = readStagedManifest(stage, releaseVersion);
+  assert.equal(names.size, manifest.files.length);
+  for (const file of ['package.json', 'main.js', 'renderer.js', 'layout.js', 'styles/app.css', 'fonts/bricolage-latin.woff2']) assert.ok(names.has(file), file);
+  assert.ok([...names].some((file) => file.startsWith('node_modules/qrcode/')), 'manifest includes production dependencies');
+  assert.ok(!names.has('app.asar'), 'unpacked installs do not receive app.asar');
+});
+
+test('installed manifest validation rejects entries outside the allowed layout', (t) => {
+  const stage = fs.mkdtempSync(path.join(os.tmpdir(), 'cobre-update-manifest-test-'));
+  t.after(() => fs.rmSync(stage, { recursive: true, force: true }));
+  const write = (relative) => { const file = path.join(stage, relative); fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, 'x'); };
+  write('app.asar'); write('12/node_modules/qrcode/package.json');
+  fs.writeFileSync(path.join(stage, 'cobre-update.json'), JSON.stringify({ version: '9.9.9', files: ['app.asar', '12/node_modules/qrcode/package.json'] }));
+  assert.throws(() => readStagedManifest(stage, '9.9.9'), /arquivos inválidos/);
+  fs.rmSync(path.join(stage, '12'), { recursive: true });
+  write('node_modules/qrcode/package.json');
+  fs.writeFileSync(path.join(stage, 'cobre-update.json'), JSON.stringify({ version: '9.9.9', files: ['app.asar', 'node_modules/qrcode/package.json'] }));
+  assert.equal(readStagedManifest(stage, '9.9.9').size, 2);
+  assert.throws(() => readStagedManifest(stage, '9.9.8'), /não corresponde/);
 });

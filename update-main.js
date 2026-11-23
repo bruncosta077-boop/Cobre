@@ -1,5 +1,7 @@
 'use strict';
 // Portable Cobre updater. Only accepts patch ZIPs from the fixed public GitHub repository.
+// Packaged installs (installer and portable ZIP) use Cobre-Update-v<x>-x64.zip, which carries only app.asar so that
+// every older updater accepts it. Unpacked installs (no app.asar) use Cobre-Update-Full-v<x>-x64.zip.
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -9,6 +11,7 @@ const OWNER = 'bruncosta077-boop', REPO = 'Cobre';
 const API = `https://api.github.com/repos/${OWNER}/${REPO}/releases/latest`;
 const FEED = `https://github.com/${OWNER}/${REPO}/releases.atom`;
 const ASSET = (v) => `Cobre-Update-v${v}-x64.zip`;
+const FULL_ASSET = (v) => `Cobre-Update-Full-v${v}-x64.zip`;
 const MAX_BYTES = 80 * 1024 * 1024;
 const ALLOWED = new Set(['account-preload.js','account.html','account-renderer.js','app.asar','byte-range.js','desktop-discovery.js','desktop-pairing-qr.js','host-grant-access.js','mini-renderer.js','cobre-id-client.js','cobre-id-main.js','features-main.js','features.js','icon.ico','icon.png','index.html','layout.js','main.js','mini-preload.js','mini.html','package.json','playback-duration.js','preload.js','remote.html','renderer.js','theme.js','styles/tokens.css','styles/fonts.css','styles/app.css','fonts/bricolage-latin.woff2','fonts/bricolage-latin-ext.woff2','fonts/jetbrains-mono-latin.woff2','fonts/jetbrains-mono-latin-ext.woff2','update-main.js']);
 const semver = (v) => { const m = /^v?(\d+)\.(\d+)\.(\d+)$/.exec(String(v || '')); return m ? m.slice(1).map(Number) : null; };
@@ -44,6 +47,7 @@ module.exports = function initUpdater({ app, ipcMain, getWin }) {
   const resourcesAsar = path.join(process.resourcesPath || '', 'app.asar');
   const packagedAsar = !!app.isPackaged && fs.existsSync(resourcesAsar);
   const supportsPatch = packagedAsar || !__dirname.toLowerCase().endsWith('.asar');
+  const packageAsset = (v) => (packagedAsar ? ASSET(v) : FULL_ASSET(v));
   const updatesDir = () => path.join(app.getPath('userData'), 'updates');
   const stateFile = () => path.join(app.getPath('userData'), 'update-installed.json');
   const send = (channel, data) => { const w=getWin(); if(w && !w.isDestroyed()) w.webContents.send(channel,data); };
@@ -62,7 +66,7 @@ module.exports = function initUpdater({ app, ipcMain, getWin }) {
     if (!r.ok) throw new Error(`A lista alternativa de versões respondeu HTTP ${r.status}.`);
     const release = parseLatestDesktopReleaseAtom((await r.text()).slice(0, 2_000_000));
     if (!release) throw new Error('Não encontrei uma release do Desktop na lista pública do GitHub.');
-    const current = app.getVersion(), assetName = ASSET(release.version);
+    const current = app.getVersion(), assetName = packageAsset(release.version);
     const digest = await releaseChecksum(release.tag, assetName);
     const available = newer(semver(release.version), semver(current) || [0, 0, 0]);
     const asset = digest ? {
@@ -85,7 +89,7 @@ module.exports = function initUpdater({ app, ipcMain, getWin }) {
     const j = await r.json(), tag = /^cobre-desktop-v(\d+\.\d+\.\d+)$/.exec(j.tag_name || ''), version = tag && tag[1];
     if (!version || !semver(version)) throw new Error('A versão publicada no GitHub tem um formato inválido.');
     const current = app.getVersion(), available = newer(semver(version), semver(current) || [0,0,0]);
-    const asset = (j.assets || []).find((a) => a.name === ASSET(version));
+    const asset = (j.assets || []).find((a) => a.name === packageAsset(version));
     let digest = asset?.digest || '';
     if (asset && !/^sha256:[0-9a-f]{64}$/i.test(digest)) digest = await releaseChecksum(j.tag_name, asset.name);
     const validAsset = !!asset && asset.size <= MAX_BYTES && /^sha256:[0-9a-f]{64}$/i.test(digest);
@@ -125,14 +129,7 @@ module.exports = function initUpdater({ app, ipcMain, getWin }) {
       if((expectedSize && total!==expectedSize) || (headerSize && total!==headerSize) || hash.digest('hex').toLowerCase()!==digest[1].toLowerCase()) throw new Error('A verificação de integridade falhou. Nenhum arquivo foi instalado.');
       fs.writeFileSync(zipPath, buffer, { flag: 'wx' });
       await extractSafe(zipPath, stage);
-      const manifestPath=path.join(stage,'cobre-update.json');
-      if(!fs.existsSync(manifestPath)) throw new Error('O pacote não contém o manifesto de atualização.');
-      const manifest=JSON.parse(fs.readFileSync(manifestPath,'utf8'));
-      if(manifest.version!==info.version || !Array.isArray(manifest.files) || !manifest.files.length || manifest.files.length>5000) throw new Error('O manifesto do pacote não corresponde à versão publicada.');
-      const names=new Set();
-      for(const name of manifest.files){ if(typeof name!=='string' || !validRelative(name) || names.has(name) || !fs.existsSync(path.join(stage,name))) throw new Error('O pacote lista arquivos inválidos.'); names.add(name); }
-      const staged=walkFiles(stage).filter((x)=>x!=='cobre-update.json');
-      if(staged.length!==names.size || staged.some((x)=>!names.has(x))) throw new Error('Os arquivos do pacote não correspondem ao manifesto.');
+      const names=readStagedManifest(stage, info.version);
       let installFiles, target;
       if (packagedAsar) {
         if (!names.has('app.asar')) throw new Error('O pacote da atualização não contém o aplicativo empacotado esperado.');
@@ -187,8 +184,22 @@ function assertUpdateTargetWritable(target) {
   }
 }
 function walkFiles(dir, rel='') { return fs.readdirSync(dir,{withFileTypes:true}).flatMap((e)=>{const p=rel?rel+'/'+e.name:e.name; return e.isDirectory()?walkFiles(path.join(dir,e.name),p):[p];}); }
+// Valida o manifesto de um pacote já extraído e devolve o conjunto de arquivos. Usado pelo download e pelos testes
+// do pacote gerado no CI, para que um pacote que o app recusaria nunca seja publicado.
+function readStagedManifest(stage, version) {
+  const manifestPath=path.join(stage,'cobre-update.json');
+  if(!fs.existsSync(manifestPath)) throw new Error('O pacote não contém o manifesto de atualização.');
+  const manifest=JSON.parse(fs.readFileSync(manifestPath,'utf8'));
+  if(manifest.version!==version || !Array.isArray(manifest.files) || !manifest.files.length || manifest.files.length>5000) throw new Error('O manifesto do pacote não corresponde à versão publicada.');
+  const names=new Set();
+  for(const name of manifest.files){ if(typeof name!=='string' || !validRelative(name) || names.has(name) || !fs.existsSync(path.join(stage,name))) throw new Error('O pacote lista arquivos inválidos.'); names.add(name); }
+  const staged=walkFiles(stage).filter((x)=>x!=='cobre-update.json');
+  if(staged.length!==names.size || staged.some((x)=>!names.has(x))) throw new Error('Os arquivos do pacote não correspondem ao manifesto.');
+  return names;
+}
 
 module.exports.validRelative = validRelative;
+module.exports.readStagedManifest = readStagedManifest;
 module.exports.extractSafe = extractSafe;
 module.exports.parseLatestDesktopReleaseAtom = parseLatestDesktopReleaseAtom;
 module.exports.parseAssetSha256 = parseAssetSha256;
