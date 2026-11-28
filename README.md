@@ -4,7 +4,7 @@
   <img src="docs/images/cobre-desktop-biblioteca.jpg" alt="Captura do Cobre Desktop em sua biblioteca de música" width="100%">
   <h1>Cobre Desktop</h1>
   <p>Reprodutor de música local para Windows</p>
-  <p><strong>Versão 3.18.0</strong></p>
+  <p><strong>Versão 3.19.0</strong></p>
 </div>
 
 Desenvolvimento principal: Bruno C S Moraes · Contribuição ao projeto: [@dilucas00](https://github.com/dilucas00).
@@ -13,9 +13,7 @@ Desenvolvimento principal: Bruno C S Moraes · Contribuição ao projeto: [@dilu
 
 Os pacotes públicos mais recentes estão na [página de lançamentos](https://github.com/bruncosta077-boop/Cobre/releases).
 
-- **Instalador:** `Cobre-3.17.1-x64.exe`
-- **Versão portátil:** `Cobre-3.17.1-x64.zip`
-- **Atualização dentro do app:** `Cobre-Update-v3.17.1-x64.zip` contém só o `app.asar`, para instalações feitas pelo instalador ou pelo ZIP portátil; `Cobre-Update-Full-v3.17.1-x64.zip` atende instalações descompactadas. A instalação automática funciona a partir da 3.17.1: quem está numa versão anterior precisa atualizar uma vez pelo instalador ou pelo ZIP portátil.
+- **Instalador, ZIP portátil e pacote de atualização:** serão anexados à release 3.19.0 após o GitHub Actions concluir a compilação.
 
 ## Sobre o projeto
 

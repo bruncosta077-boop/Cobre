@@ -33,6 +33,7 @@
     if (v.value === b.dataset.mode) v.onchange({ target: v }); else show();
   });
   $('#acct').onclick = () => api.ipc.send('cid:open');
+  $('#connections').onclick = () => { if (typeof remoteDlg === 'function') remoteDlg().catch((error) => toast(error?.message || 'Não foi possível abrir as conexões.')); };
 
   // Letra e Fila: aciona as abas antigas; clicar de novo volta à biblioteca
   const tabToggle = (name, id) => () => { setNp(false); (tab === name ? $('#t-lib') : $(id)).click(); };

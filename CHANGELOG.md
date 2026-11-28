@@ -1,5 +1,11 @@
 # Histórico de versões — Cobre Desktop
 
+## 3.19.0 — conexões em acesso direto
+
+- Um novo botão Conexões fica sempre visível na barra lateral e abre a central de QR, rede local e Tailscale.
+- A tela explica quais endereços copiar para o Mobile e que o Cobre Server precisa estar ativo; o Desktop envia a biblioteca e o áudio diretamente.
+- O atalho de conexão foi removido das Preferências para evitar caminhos duplicados.
+
 ## 3.18.0 — conexão pela VPN Tailscale
 
 - A janela Acesso remoto mostra o endereço Tailscale do Desktop junto ao endereço local, quando a VPN está ativa.
