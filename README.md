@@ -4,7 +4,7 @@
   <img src="docs/images/cobre-desktop-biblioteca.jpg" alt="Captura do Cobre Desktop em sua biblioteca de música" width="100%">
   <h1>Cobre Desktop</h1>
   <p>Reprodutor de música local para Windows</p>
-  <p><strong>Versão 3.17.1</strong></p>
+  <p><strong>Versão 3.18.0</strong></p>
 </div>
 
 Desenvolvimento principal: Bruno C S Moraes · Contribuição ao projeto: [@dilucas00](https://github.com/dilucas00).

@@ -16,4 +16,16 @@ function createDiscoveryService(hostId, port = 8787, name = 'Cobre Desktop') {
   };
 }
 
-module.exports = { createDiscoveryService };
+function findTailscaleIPv4(networkInterfaces) {
+  for (const entries of Object.values(networkInterfaces || {})) {
+    for (const entry of entries || []) {
+      if (entry?.internal || !['IPv4', 4].includes(entry?.family)) continue;
+      const parts = String(entry.address || '').split('.').map(Number);
+      if (parts.length === 4 && parts.every((part) => Number.isInteger(part) && part >= 0 && part <= 255) &&
+          parts[0] === 100 && parts[1] >= 64 && parts[1] <= 127) return entry.address;
+    }
+  }
+  return '';
+}
+
+module.exports = { createDiscoveryService, findTailscaleIPv4 };

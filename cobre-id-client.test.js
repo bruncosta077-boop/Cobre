@@ -4,6 +4,16 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { CobreIdClient } = require('./cobre-id-client');
 
+test('Cobre ID Desktop aceita HTTP via Tailscale e recusa HTTP público', async () => {
+  const make = () => new CobreIdClient({
+    store: { load: () => null, save: () => {} },
+    fetchImpl: async () => ({ ok: true, status: 200, json: async () => ({ accessToken: 'a', refreshToken: 'r', expiresIn: 300, device: { id: '123e4567-e89b-42d3-a456-426614174000' } }) }),
+  });
+  await make().signIn({ server: 'http://100.90.80.70:8080', email: 'a@b.co', password: 'senha-forte-1' });
+  await make().signIn({ server: 'https://accounts.example.com', email: 'a@b.co', password: 'senha-forte-1' });
+  await assert.rejects(make().signIn({ server: 'http://accounts.example.com', email: 'a@b.co', password: 'senha-forte-1' }), { code: 'insecure_server' });
+});
+
 test('Cobre ID Desktop lista, aprova e recusa pedidos vinculados ao próprio host', async () => {
   const calls = [];
   let state = null;

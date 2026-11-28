@@ -16,6 +16,20 @@ class CobreIdClient {
   get info() { return { loggedIn: this.loggedIn, email: this.s.email || '', server: this.s.server || '', deviceId: this.s.deviceId || '' }; }
   _save() { this.store.save(this.s); }
 
+  _normalizeServer(raw) {
+    const value = String(raw || '').trim().replace(/\/+$/, '');
+    let url;
+    try { url = new URL(value); } catch { throw new CobreIdError(0, 'bad_server', 'Informe um endereço válido do Cobre Server.'); }
+    const host = url.hostname.toLowerCase();
+    if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.search || url.hash || (url.pathname && url.pathname !== '/')) {
+      throw new CobreIdError(0, 'bad_server', 'Use somente o endereço base do Cobre Server.');
+    }
+    if (url.protocol === 'http:' && !isPrivateOrTailnetHost(host)) {
+      throw new CobreIdError(0, 'insecure_server', 'Por segurança, HTTP só é aceito na rede local ou VPN Tailscale. Use HTTPS em servidor público.');
+    }
+    return value;
+  }
+
   async _raw(method, path, body, token) {
     if (!this.s.server) throw new CobreIdError(0, 'no_server', 'Informe o endereço do servidor.');
     let r;
@@ -37,7 +51,7 @@ class CobreIdClient {
   }
 
   async signIn({ server, email, password, create }) {
-    this.s.server = String(server || this.s.server || '').trim().replace(/\/+$/, '');
+    this.s.server = this._normalizeServer(server || this.s.server);
     const j = await this._raw('POST', create ? '/v1/register' : '/v1/login', {
       email, password, device: { id: this.s.deviceId || undefined, name: this.deviceName, type: this.deviceType },
     });
@@ -95,6 +109,16 @@ class CobreIdClient {
     try { await this._auth('POST', '/v1/logout', {}); } catch {}
     this.access = null; delete this.s.refresh; delete this.s.deviceId; this._save();
   }
+}
+
+function isPrivateOrTailnetHost(host) {
+  if (host === 'localhost' || host === '::1') return true;
+  if (host.endsWith('.ts.net') && host.split('.').length >= 4) return true;
+  const parts = host.split('.').map(Number);
+  if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) return false;
+  const [a, b] = parts;
+  return a === 10 || a === 127 || (a === 192 && b === 168) ||
+    (a === 172 && b >= 16 && b <= 31) || (a === 169 && b === 254) || (a === 100 && b >= 64 && b <= 127);
 }
 
 module.exports = { CobreIdClient, CobreIdError };

@@ -3,7 +3,7 @@ const http = require('http'), os = require('os');
 const Bonjour = require('bonjour-service');
 const QRCode = require('qrcode');
 const { createDesktopPairingUri } = require('./desktop-pairing-qr');
-const { createDiscoveryService } = require('./desktop-discovery');
+const { createDiscoveryService, findTailscaleIPv4 } = require('./desktop-discovery');
 const { pipeline } = require('stream');
 const parseByteRange = require('./byte-range');
 const { createHostGrantAuthorizer } = require('./host-grant-access');
@@ -388,7 +388,10 @@ module.exports = function (X) {
     const pairing = pairingPayload();
     return { ...pairing, dataUrl: await QRCode.toDataURL(pairing.uri, { width: 260, margin: 2, errorCorrectionLevel: 'M', color: { dark: '#171310', light: '#ffffff' } }) };
   });
-  ipcMain.handle('remoteStatus', () => { const s = readJ('remote.json', {}); return { on: !!srv, url: srv ? `http://${lanIp()}:8787` : '' }; });
+  ipcMain.handle('remoteStatus', () => {
+    const tailscaleIp = srv ? findTailscaleIPv4(os.networkInterfaces()) : '';
+    return { on: !!srv, url: srv ? `http://${lanIp()}:8787` : '', tailscaleUrl: tailscaleIp ? `http://${tailscaleIp}:8787` : '' };
+  });
   ipcMain.handle('remoteSet', (_e, on) => { if (on) startRemote(); else stopRemote(); return true; });
   ipcMain.handle('credits', async (_e, artist, album) => {
     const f = 'credits-' + crypto.createHash('md5').update(norm2(artist) + '|' + norm2(album)).digest('hex') + '.json', c = readJ(f, null);

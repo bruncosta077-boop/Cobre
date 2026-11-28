@@ -1,5 +1,13 @@
 # Histórico de versões — Cobre Desktop
 
+## 3.18.0 — conexão pela VPN Tailscale
+
+- A janela Acesso remoto mostra o endereço Tailscale do Desktop junto ao endereço local, quando a VPN está ativa.
+- A interface explica o uso do endereço VPN no Mobile e a aprovação pelo Cobre ID.
+- O cliente Cobre ID aceita HTTP na rede local/VPN e HTTPS público; bloqueia HTTP em domínio público para proteger credenciais e tokens.
+- Biblioteca e áudio seguem diretamente do Desktop ao Mobile pelo túnel Tailscale, sem relay nem porta aberta no roteador.
+- Testes cobrem descoberta do endereço Tailscale e validação segura do endereço do Server.
+
 ## 3.17.1 — atualização dentro do app instala de verdade
 
 - A atualização dentro do app baixava e verificava a versão nova, fechava o Cobre e não instalava nada. O instalador era lançado como um PowerShell sem console, e nesse modo o Windows PowerShell termina na hora, sem erro e sem executar o script. Isso valia para todas as versões anteriores.
