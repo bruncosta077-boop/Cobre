@@ -13,7 +13,7 @@ Desenvolvimento principal: Bruno C S Moraes · Contribuição ao projeto: [@dilu
 
 Os pacotes públicos mais recentes estão na [página de lançamentos](https://github.com/bruncosta077-boop/Cobre/releases).
 
-- **Instalador, ZIP portátil e pacote de atualização:** serão anexados à release 3.19.0 após o GitHub Actions concluir a compilação.
+- **[Baixar Cobre Desktop 3.19.0](https://github.com/bruncosta077-boop/Cobre/releases/tag/cobre-desktop-v3.19.0):** instalador Windows, ZIP portátil, pacotes de atualização e checksums.
 
 ## Sobre o projeto
 
