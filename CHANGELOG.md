@@ -1,5 +1,10 @@
 # Histórico de versões — Cobre Desktop
 
+## 3.19.1 — aprovação mais perto da conexão
+
+- O botão Conexões informa se há pedidos de acesso pendentes.
+- Um atalho abre diretamente a Conta Cobre para permitir ou recusar esses pedidos.
+
 ## 3.19.0 — conexões em acesso direto
 
 - Um novo botão Conexões fica sempre visível na barra lateral e abre a central de QR, rede local e Tailscale.

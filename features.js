@@ -475,14 +475,19 @@ async function aiDlg() {
 async function remoteDlg() {
   const s = await api.ipc.invoke('remoteStatus');
   let pairing = null, pairingError = '';
-  if (s.on) { try { pairing = await api.ipc.invoke('remotePairingQr'); } catch (e) { pairingError = e.message || 'Entre no Cobre ID para gerar o QR.'; } }
+  let pendingRequests = [];
+  if (s.on) {
+    try { pairing = await api.ipc.invoke('remotePairingQr'); } catch (e) { pairingError = e.message || 'Entre no Cobre ID para gerar o QR.'; }
+    try { const result = await api.ipc.invoke('cid:hostRequests'); if (result?.ok && Array.isArray(result.data)) pendingRequests = result.data; } catch {}
+  }
   const html = s.on
-    ? `<p class="hl">Esta é a central de conexão do Cobre Desktop. Na mesma rede, leia o QR no Mobile. Fora de casa, instale Tailscale no PC e no celular, entre no mesmo tailnet e informe o endereço VPN abaixo em Mobile → Conexões.</p>${pairing ? `<div class="qr-box"><img alt="QR de pareamento Cobre" src="${pairing.dataUrl}"><div class="mu">QR da rede local · válido por 5 minutos · sem senha ou token</div></div>` : `<p class="mu">${esc(pairingError)}</p>`}<label class="mu">Endereço local</label><input id="rurl" readonly value="${esc(s.url)}">${s.tailscaleUrl ? `<label class="mu">Endereço pela VPN Tailscale · Mobile</label><input id="rtail" readonly value="${esc(s.tailscaleUrl)}">` : '<p class="mu">Tailscale não detectado. Abra o Tailscale neste PC e reabra Conexões para exibir o endereço 100.x.</p>'}<p class="mu">No Mobile, use também o endereço 100.x do Cobre Server, com a porta 8080. O túnel Tailscale protege a conexão e o áudio vai direto deste Desktop ao celular. Não abra portas no roteador.</p>`
+    ? `<p class="hl">Central de conexão do Cobre. Na mesma rede, leia o QR no Mobile. Fora de casa, entre no mesmo tailnet no PC e no celular e informe o endereço VPN abaixo em Mobile → Conexões.</p>${pendingRequests.length ? `<p class="hl">${pendingRequests.length} pedido(s) de acesso aguardando aprovação.</p>` : ''}${pairing ? `<div class="qr-box"><img alt="QR de pareamento Cobre" src="${pairing.dataUrl}"><div class="mu">QR da rede local · válido por 5 minutos · sem senha ou token</div></div>` : `<p class="mu">${esc(pairingError)}</p>`}<label class="mu">Endereço local</label><input id="rurl" readonly value="${esc(s.url)}">${s.tailscaleUrl ? `<label class="mu">Endereço pela VPN Tailscale · Mobile</label><input id="rtail" readonly value="${esc(s.tailscaleUrl)}">` : '<p class="mu">Tailscale não detectado. Abra o Tailscale neste PC e reabra Conexões para exibir o endereço 100.x.</p>'}<p class="mu">No Mobile, use também o endereço 100.x do Cobre Server, com a porta 8080. Para aprovar um pedido, abra a Conta Cobre no Desktop. O áudio vai direto deste Desktop ao celular; não abra portas no roteador.</p>`
     : '<p class="hl">Liga um servidor no seu PC para você ouvir a biblioteca no celular ou na TV, pelo navegador, sem baixar as músicas.</p><p class="mu">Funciona em redes privadas. Arquivos ALAC (.m4a sem perdas) podem não tocar em alguns aparelhos.</p>';
   setTimeout(() => { if ($('#rurl')) $('#rurl').select(); }, 60);
-  const r = await dlg({ title: 'Conexões', html, buttons: s.on ? [{ label: 'Fechar', v: false }, ...(pairing ? [{ label: 'Novo QR', v: 'qr' }] : []), { label: 'Desligar', v: 'off', danger: true }] : [{ label: 'Agora não', v: false }, { label: 'Ligar', v: 'on' }] });
+  const r = await dlg({ title: 'Conexões', html, buttons: s.on ? [{ label: 'Fechar', v: false }, ...(pendingRequests.length ? [{ label: `Aprovar pedidos (${pendingRequests.length})`, v: 'requests' }] : []), ...(pairing ? [{ label: 'Novo QR', v: 'qr' }] : []), { label: 'Desligar', v: 'off', danger: true }] : [{ label: 'Agora não', v: false }, { label: 'Ligar', v: 'on' }] });
   if (r.v === 'on' || r.v === 'off') { await api.ipc.invoke('remoteSet', r.v === 'on'); if (r.v === 'on') remoteDlg(); else toast('Acesso remoto desligado'); }
   else if (r.v === 'qr') remoteDlg();
+  else if (r.v === 'requests') api.ipc.send('cid:open');
 }
 
 // ---------- mini player, configurações e estado inicial

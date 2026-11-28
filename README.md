@@ -4,7 +4,7 @@
   <img src="docs/images/cobre-desktop-biblioteca.jpg" alt="Captura do Cobre Desktop em sua biblioteca de música" width="100%">
   <h1>Cobre Desktop</h1>
   <p>Reprodutor de música local para Windows</p>
-  <p><strong>Versão 3.19.0</strong></p>
+  <p><strong>Versão 3.19.1</strong></p>
 </div>
 
 Desenvolvimento principal: Bruno C S Moraes · Contribuição ao projeto: [@dilucas00](https://github.com/dilucas00).
@@ -13,7 +13,7 @@ Desenvolvimento principal: Bruno C S Moraes · Contribuição ao projeto: [@dilu
 
 Os pacotes públicos mais recentes estão na [página de lançamentos](https://github.com/bruncosta077-boop/Cobre/releases).
 
-- **[Baixar Cobre Desktop 3.19.0](https://github.com/bruncosta077-boop/Cobre/releases/tag/cobre-desktop-v3.19.0):** instalador Windows, ZIP portátil, pacotes de atualização e checksums.
+- **[Baixar Cobre Desktop 3.19.1](https://github.com/bruncosta077-boop/Cobre/releases/tag/cobre-desktop-v3.19.1):** instalador Windows, ZIP portátil, pacotes de atualização e checksums.
 
 ## Sobre o projeto
 
